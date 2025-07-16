@@ -4,6 +4,7 @@ import MenuCard from '../components/MenuCard';
 import OrderSidebar from '../components/OrderSidebar';
 import { useOrders } from './components/OrderStore';
 import Link from 'next/link';
+import { supabase } from '../lib/supabaseClient';
 
 
 // 分類商品資料
@@ -101,11 +102,25 @@ export default function HomePage() {
   };
 
   // 結帳
-  const handleCheckout = () => {
+  const handleCheckout = async () => {
     if (order.length === 0) return;
-    addOrder({ items: order });
-    setOrder([]);
-    alert('訂單已送出！');
+    try {
+      console.log('try insert');
+      const { error } = await supabase
+        .from('orders')
+        .insert([
+          {
+            items: order,
+            status: '新訂單',
+          },
+        ]);
+      if (error) throw error;
+      setOrder([]);
+      alert('訂單已送出！');
+    } catch (err) {
+      console.error(err);
+      alert('訂單送出失敗！');
+    }
   };
 
   return (
