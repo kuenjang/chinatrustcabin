@@ -1,15 +1,48 @@
 'use client';
 
-import React, { useState } from 'react';
-import { useOrders, OrderStatus } from '../components/OrderStore';
+import { useState, useEffect } from 'react';
+import { supabase } from '../../lib/supabaseClient';
 
 const ADMIN_PASSWORD = '1234';
-const statusList: OrderStatus[] = ['新訂單', '已處理', '已完成'];
+const statusList = ['新訂單', '已處理', '已完成'];
 
 export default function AdminPage() {
   const [authed, setAuthed] = useState(false);
   const [pw, setPw] = useState('');
-  const { orders, updateOrderStatus, deleteOrder } = useOrders();
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  // 查詢所有訂單
+  const fetchOrders = async () => {
+    setLoading(true);
+    const { data, error } = await supabase
+      .from('orders')
+      .select('*')
+      .order('created_at', { ascending: false });
+      console.log('supabase orders:', data, error);
+    if (!error) setOrders(data || []);
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    if (authed) {
+      fetchOrders();
+      const interval = setInterval(fetchOrders, 5000); // 每5秒自動刷新
+      return () => clearInterval(interval); // 離開頁面時清除計時器
+    }
+  }, [authed]);
+
+  // 修改訂單狀態
+  const updateOrderStatus = async (id, status) => {
+    await supabase.from('orders').update({ status }).eq('id', id);
+    fetchOrders();
+  };
+
+  // 刪除訂單
+  const deleteOrder = async (id) => {
+    await supabase.from('orders').delete().eq('id', id);
+    fetchOrders();
+  };
 
   if (!authed) {
     return (
@@ -38,7 +71,9 @@ export default function AdminPage() {
   return (
     <div className="p-8">
       <h1 className="text-2xl font-bold mb-4">訂單清單</h1>
-      {orders.length === 0 ? (
+      {loading ? (
+        <div>載入中...</div>
+      ) : orders.length === 0 ? (
         <div>目前沒有訂單。</div>
       ) : (
         <div className="space-y-6">
@@ -47,7 +82,7 @@ export default function AdminPage() {
               <div className="flex justify-between items-center mb-2">
                 <div className="text-gray-500 text-sm">
                   {(() => {
-                    const date = new Date(order.createdAt);
+                    const date = new Date(order.created_at);
                     const yyyy = date.getFullYear();
                     const MM = String(date.getMonth() + 1).padStart(2, '0');
                     const dd = String(date.getDate()).padStart(2, '0');
@@ -63,7 +98,7 @@ export default function AdminPage() {
                 >刪除</button>
               </div>
               <ul className="mb-2">
-                {order.items.map((item, idx) => (
+                {(order.items || []).map((item, idx) => (
                   <li key={idx} className="flex justify-between">
                     <span>{item.name} x {item.qty}</span>
                     <span>${item.price * item.qty}</span>
@@ -76,7 +111,7 @@ export default function AdminPage() {
                 <select
                   className="border px-2 py-1 rounded"
                   value={order.status}
-                  onChange={e => { updateOrderStatus(order.id, e.target.value as OrderStatus); }}
+                  onChange={e => { updateOrderStatus(order.id, e.target.value); }}
                 >
                   {statusList.map(s => <option key={s} value={s}>{s}</option>)}
                 </select>
