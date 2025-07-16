@@ -69,7 +69,7 @@ const OrderSidebar: React.FC<OrderSidebarProps> = ({ order, onChangeQty, onRemov
         <span className="font-bold text-lg">總計</span>
         <span className="font-bold text-lg text-red-700">NT${total}</span>
       </div>
-      <button className="w-full bg-yellow-400 hover:bg-yellow-500 text-white font-bold py-2 rounded text-lg">結帳</button>
+      {/* <button className="w-full bg-yellow-400 hover:bg-yellow-500 text-white font-bold py-2 rounded text-lg">結帳</button> */}
     </aside>
   );
 };
