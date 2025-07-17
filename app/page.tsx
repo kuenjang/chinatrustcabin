@@ -115,6 +115,20 @@ export default function HomePage() {
           },
         ]);
       if (error) throw error;
+
+      // Telegram Bot 通知
+      const TELEGRAM_BOT_TOKEN = '8083777541:AAEL6LDdIa2wqFKKpMIZGVz0ReFOklr2LHA';
+      const TELEGRAM_CHAT_ID = '6323783287';
+      const message = `有一筆新訂單！\n餐點：${order.map(i => i.name + 'x' + i.qty).join(', ')}`;
+      await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chat_id: TELEGRAM_CHAT_ID,
+          text: message
+        })
+      });
+
       setOrder([]);
       alert('訂單已送出！');
     } catch (err) {

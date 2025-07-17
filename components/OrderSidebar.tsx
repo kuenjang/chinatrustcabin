@@ -36,6 +36,9 @@ const OrderSidebar: React.FC<OrderSidebarProps> = ({ order, onChangeQty, onRemov
                   <div className="text-xs text-gray-500">NT${item.price}</div>
                 </div>
                 <div className="flex items-center gap-2">
+                  <span className="text-xs text-gray-500">
+                    {(item.name.includes('茶') || item.name.includes('可樂') || item.name.includes('紅茶')) ? '杯數' : '份數'}
+                  </span>
                   <button
                     className="px-2 text-lg text-gray-500 hover:text-pink-600"
                     onClick={() => onChangeQty(item.name, item.qty - 1)}
@@ -50,7 +53,7 @@ const OrderSidebar: React.FC<OrderSidebarProps> = ({ order, onChangeQty, onRemov
                     className="text-red-400 hover:text-red-600 text-lg"
                     onClick={() => onRemove(item.name)}
                     title="刪除"
-                  >移除</button>
+                  >取消</button>
                 </div>
               </div>
               <textarea
