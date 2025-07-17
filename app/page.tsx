@@ -121,7 +121,7 @@ export default function HomePage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ order })
-      });
+      }).then(res => res.json()).then(data => console.log('前端收到:', data));
 
       setOrder([]);
       alert('訂單已送出！');
