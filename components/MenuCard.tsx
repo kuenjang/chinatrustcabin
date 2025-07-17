@@ -11,7 +11,7 @@ interface MenuCardProps {
 const MenuCard: React.FC<MenuCardProps> = ({ name, description, price, image, onAdd }) => {
   return (
     <div className="bg-white rounded-xl shadow-md overflow-hidden flex flex-col transition hover:shadow-xl border border-pink-100">
-      <div className="bg-gray-200 flex items-center justify-center h-60 text-3xl text-gray-400 select-none">
+      <div className="bg-gray-200 flex items-center justify-center h-40 text-3xl text-gray-400 select-none">
         {image ? (
           <img src={image} alt={name} className="object-cover w-full h-full" />
         ) : (
@@ -25,8 +25,8 @@ const MenuCard: React.FC<MenuCardProps> = ({ name, description, price, image, on
         </div>
         <div className="flex items-center justify-between mt-2">
           <span className="text-red-600 font-bold text-lg">NT${price}</span>
-          <button className="bg-red-500 hover:bg-red-600 text-white px-4 py-1 rounded flex items-center gap-1 text-sm font-semibold shadow transition" onClick={onAdd}>
-            <span className="text-xl font-bold">＋</span> 加入訂單
+          <button className="bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded flex items-center gap-1 text-sm font-semibold shadow transition" onClick={onAdd}>
+            加入訂單
           </button>
         </div>
       </div>

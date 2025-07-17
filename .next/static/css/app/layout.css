@@ -548,8 +548,8 @@ video {
 .grid {
   display: grid;
 }
-.h-60 {
-  height: 15rem;
+.h-40 {
+  height: 10rem;
 }
 .h-full {
   height: 100%;
@@ -861,8 +861,8 @@ body { background: yellow !important; }
 }
 @media (min-width: 768px) {
 
-  .md\:grid-cols-3 {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+  .md\:grid-cols-4 {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 
   .md\:flex-row {

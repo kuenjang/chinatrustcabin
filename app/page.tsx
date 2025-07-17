@@ -12,7 +12,7 @@ const menuList = [
   {
     category: '粉類（辣度：大/中/小）',
     items: [
-      { name: '豪華版爆香蝦獅粉', description: '配料豐富的豪華版蝦獅粉湯，香氣浓郁。', price: 180 },
+      { name: '豪華版爆香蝦獅粉', description: '配料豐富的豪華版蝦獅粉湯，香氣浓郁。', price: 180, image: '/img/haohuaban_baoxiang_xiashifen.jpg' },
       { name: '招牌爆香蝦獅粉', description: '本店特色招牌蝦獅粉湯，經典美味。', price: 160 },
       { name: '鮮香肥腸蝦獅粉', description: '加入鮮美肥腸的蝦獅粉湯，風味獨特。', price: 150 },
       { name: '酸辣涼粉', description: '', price: 90 },
@@ -137,13 +137,14 @@ export default function HomePage() {
           {menuList.map(group => (
             <div key={group.category} className="mb-10">
               <h2 className="text-2xl font-bold text-pink-700 mb-4">{group.category}</h2>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
                 {group.items.map((item) => (
                   <MenuCard
                     key={item.name}
                     name={item.name}
                     description={item.description}
                     price={item.price}
+                    image={item.image}
                     onAdd={() => handleAddToOrder(item)}
                   />
                 ))}

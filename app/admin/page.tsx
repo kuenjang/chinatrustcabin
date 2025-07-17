@@ -27,7 +27,7 @@ export default function AdminPage() {
   useEffect(() => {
     if (authed) {
       fetchOrders();
-      const interval = setInterval(fetchOrders, 5000); // 每5秒自動刷新
+      const interval = setInterval(fetchOrders, 15000); // 每15秒自動刷新
       return () => clearInterval(interval); // 離開頁面時清除計時器
     }
   }, [authed]);
@@ -40,8 +40,12 @@ export default function AdminPage() {
 
   // 刪除訂單
   const deleteOrder = async (id) => {
-    await supabase.from('orders').delete().eq('id', id);
-    fetchOrders();
+    const { error } = await supabase.from('orders').delete().eq('id', id);
+    if (error) {
+      alert('刪除失敗：' + error.message);
+    } else {
+      fetchOrders();
+    }
   };
 
   if (!authed) {
