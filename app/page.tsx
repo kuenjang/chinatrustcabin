@@ -116,17 +116,11 @@ export default function HomePage() {
         ]);
       if (error) throw error;
 
-      // Telegram Bot 通知（安全：改用環境變數）
-      const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
-      const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID;
-      const message = `有一筆新訂單！\n餐點：${order.map(i => i.name + 'x' + i.qty).join(', ')}`;
-      await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+      // 呼叫 Next.js API Route 發送 Telegram 通知
+      await fetch('/api/telegram', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          chat_id: TELEGRAM_CHAT_ID,
-          text: message
-        })
+        body: JSON.stringify({ order })
       });
 
       setOrder([]);
