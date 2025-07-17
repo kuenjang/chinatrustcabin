@@ -50,7 +50,7 @@ const OrderSidebar: React.FC<OrderSidebarProps> = ({ order, onChangeQty, onRemov
                     className="text-red-400 hover:text-red-600 text-lg"
                     onClick={() => onRemove(item.name)}
                     title="刪除"
-                  >🗑️</button>
+                  >移除</button>
                 </div>
               </div>
               <textarea
