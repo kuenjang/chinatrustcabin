@@ -61,10 +61,24 @@ interface OrderItem {
   note?: string;
 }
 
+// 訂單確認彈出視窗型別
+interface OrderConfirmation {
+  show: boolean;
+  orderNumber: string;
+  deliveryType: string;
+  totalAmount: number;
+}
+
 export default function HomePage() {
   const [order, setOrder] = useState<OrderItem[]>([]);
   const [deliveryType, setDeliveryType] = useState<'dine_in' | 'takeaway'>('dine_in');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [orderConfirmation, setOrderConfirmation] = useState<OrderConfirmation>({
+    show: false,
+    orderNumber: '',
+    deliveryType: '',
+    totalAmount: 0
+  });
 
   // 加入訂單
   const handleAddToOrder = (item: { name: string; price: number }) => {
@@ -101,6 +115,11 @@ export default function HomePage() {
 
   // 計算總金額
   const totalAmount = order.reduce((sum, item) => sum + (item.price * item.qty), 0);
+
+  // 關閉訂單確認彈出視窗
+  const closeOrderConfirmation = () => {
+    setOrderConfirmation(prev => ({ ...prev, show: false }));
+  };
 
   // 結帳
   const handleCheckout = async () => {
@@ -139,7 +158,15 @@ export default function HomePage() {
       const result = await response.json();
 
       if (result.success) {
-        alert(`訂單建立成功！\n訂單號：${result.order_number}\n取餐方式：${deliveryType === 'dine_in' ? '內用' : '外帶'}`);
+        // 顯示美觀的訂單確認彈出視窗
+        setOrderConfirmation({
+          show: true,
+          orderNumber: result.order_number,
+          deliveryType: deliveryType === 'dine_in' ? '內用' : '外帶',
+          totalAmount: totalAmount
+        });
+        
+        // 清空購物車
         setOrder([]);
         setDeliveryType('dine_in');
       } else {
@@ -151,6 +178,12 @@ export default function HomePage() {
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  // 從完整訂單號中提取簡化號碼
+  const getSimpleOrderNumber = (fullOrderNumber: string) => {
+    const match = fullOrderNumber.match(/ON-(\d+)$/);
+    return match ? match[1] : fullOrderNumber;
   };
 
   return (
@@ -240,6 +273,75 @@ export default function HomePage() {
           )}
         </aside>
       </main>
+
+      {/* 訂單確認彈出視窗 */}
+      {orderConfirmation.show && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl animate-fade-in">
+            {/* 成功圖示 */}
+            <div className="text-center mb-6">
+              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">🎉 訂單建立成功！</h2>
+            </div>
+
+            {/* 訂單資訊 */}
+            <div className="space-y-4 mb-6">
+              <div className="bg-gray-50 rounded-lg p-4">
+                <div className="text-sm text-gray-600 mb-1">完整訂單號</div>
+                <div className="text-lg font-mono text-gray-900">{orderConfirmation.orderNumber}</div>
+              </div>
+              
+              <div className="bg-blue-50 rounded-lg p-4 border-2 border-blue-200 order-number-highlight">
+                <div className="text-sm text-blue-600 mb-1">📋 請記住您的訂單號</div>
+                <div className="text-3xl font-bold text-blue-700 text-center">
+                  {getSimpleOrderNumber(orderConfirmation.orderNumber)}
+                </div>
+                <div className="text-sm text-blue-600 text-center mt-1">取餐時請報此號碼</div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-green-50 rounded-lg p-3">
+                  <div className="text-sm text-green-600 mb-1">取餐方式</div>
+                  <div className="font-semibold text-green-700">{orderConfirmation.deliveryType}</div>
+                </div>
+                <div className="bg-orange-50 rounded-lg p-3">
+                  <div className="text-sm text-orange-600 mb-1">總金額</div>
+                  <div className="font-bold text-orange-700">${orderConfirmation.totalAmount}</div>
+                </div>
+              </div>
+            </div>
+
+            {/* 溫馨提示 */}
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+              <div className="flex items-start space-x-2">
+                <span className="text-yellow-600 text-lg">💡</span>
+                <div className="text-sm text-yellow-800">
+                  <div className="font-semibold mb-1">取餐提醒：</div>
+                  <ul className="space-y-1">
+                    <li>• 請記住您的訂單號：<span className="font-bold text-yellow-900">{getSimpleOrderNumber(orderConfirmation.orderNumber)}</span></li>
+                    <li>• 取餐時請主動報出訂單號</li>
+                    <li>• 我們會盡快為您準備餐點</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            {/* 確認按鈕 */}
+            <div className="text-center">
+              <button
+                onClick={closeOrderConfirmation}
+                className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-8 py-3 rounded-xl font-semibold hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
+              >
+                確定
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 } 
