@@ -13,7 +13,10 @@ export async function POST(req: Request) {
   }).join('\n');
   
   const deliveryText = delivery_type === 'dine_in' ? '🍽️ 內用' : '🥡 外帶';
+  
+  // 修正時區問題：使用台灣時區
   const currentTime = new Date().toLocaleString('zh-TW', {
+    timeZone: 'Asia/Taipei',
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',
