@@ -2,10 +2,7 @@
 import React, { useState } from 'react';
 import MenuCard from '../components/MenuCard';
 import OrderSidebar from '../components/OrderSidebar';
-import { useOrders } from './components/OrderStore';
 import Link from 'next/link';
-import { supabase } from '../lib/supabaseClient';
-
 
 // 分類商品資料
 const menuList = [
@@ -66,7 +63,8 @@ interface OrderItem {
 
 export default function HomePage() {
   const [order, setOrder] = useState<OrderItem[]>([]);
-  const { addOrder } = useOrders();
+  const [deliveryType, setDeliveryType] = useState<'dine_in' | 'takeaway'>('dine_in');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // 加入訂單
   const handleAddToOrder = (item: { name: string; price: number }) => {
@@ -101,42 +99,67 @@ export default function HomePage() {
     );
   };
 
+  // 計算總金額
+  const totalAmount = order.reduce((sum, item) => sum + (item.price * item.qty), 0);
+
   // 結帳
   const handleCheckout = async () => {
-    if (order.length === 0) return;
+    if (order.length === 0) {
+      alert('請先選擇餐點！');
+      return;
+    }
+
+    setIsSubmitting(true);
+
     try {
-      console.log('try insert');
-      const { error } = await supabase
-        .from('orders')
-        .insert([
-          {
-            items: order,
-            status: '新訂單',
-          },
-        ]);
-      if (error) throw error;
+      const orderData = {
+        channel_code: 'ON', // 線上點餐
+        customer_name: '線上客戶',
+        customer_phone: '',
+        total_amount: totalAmount,
+        payment_method: 'cash',
+        delivery_type: deliveryType,
+        special_notes: '',
+        items: order.map(item => ({
+          name: item.name,
+          price: item.price,
+          quantity: item.qty,
+          notes: item.note
+        }))
+      };
 
-      // 呼叫 Next.js API Route 發送 Telegram 通知
-      await fetch('/api/telegram', {
+      const response = await fetch('/api/orders', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ order })
-      }).then(res => res.json()).then(data => console.log('前端收到:', data));
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(orderData),
+      });
 
-      setOrder([]);
-      alert('訂單已送出！');
-    } catch (err) {
-      console.error(err);
-      alert('訂單送出失敗！');
+      const result = await response.json();
+
+      if (result.success) {
+        alert(`訂單建立成功！\n訂單號：${result.order_number}\n取餐方式：${deliveryType === 'dine_in' ? '內用' : '外帶'}`);
+        setOrder([]);
+        setDeliveryType('dine_in');
+      } else {
+        alert(`訂單建立失敗：${result.error}`);
+      }
+    } catch (error) {
+      console.error('訂單提交失敗:', error);
+      alert('訂單提交失敗，請稍後再試！');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   return (
     <div className="min-h-screen bg-pink-100">
       <header className="flex justify-between items-center p-4 bg-white shadow">
-        <h1 className="text-xl font-bold">點餐系統</h1>
+        <h1 className="text-xl font-bold">線上點餐系統</h1>
         <Link href="/admin" className="text-blue-600 underline">後台管理</Link>
       </header>
+      
       {/* 主內容區域 */}
       <main className="max-w-7xl mx-auto py-10 px-2 md:px-8 flex flex-col md:flex-row gap-8 items-start">
         {/* 左側：單點餐品 */}
@@ -160,21 +183,61 @@ export default function HomePage() {
             </div>
           ))}
         </section>
+
         {/* 右側：購物訂單 */}
         <aside className="w-full max-w-sm">
           <h1 className="text-2xl font-extrabold text-pink-700 mb-6 border-b pb-2">購物訂單</h1>
+          
           <OrderSidebar
             order={order}
             onChangeQty={handleChangeQty}
             onRemove={handleRemove}
             onChangeNote={handleChangeNote}
           />
-          <button
-            className="bg-yellow-400 text-white px-4 py-2 rounded w-full text-lg font-bold mt-4"
-            onClick={handleCheckout}
-          >
-            結帳
-          </button>
+
+          {/* 取餐方式選擇 */}
+          {order.length > 0 && (
+            <div className="mt-6 bg-white p-4 rounded-lg shadow">
+              <h3 className="text-lg font-semibold mb-4">取餐方式</h3>
+              
+              <div className="space-y-3">
+                <label className="flex items-center space-x-3 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="deliveryType"
+                    value="dine_in"
+                    checked={deliveryType === 'dine_in'}
+                    onChange={(e) => setDeliveryType(e.target.value as 'dine_in' | 'takeaway')}
+                    className="text-pink-600 focus:ring-pink-500"
+                  />
+                  <span className="text-gray-700">內用</span>
+                </label>
+                
+                <label className="flex items-center space-x-3 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="deliveryType"
+                    value="takeaway"
+                    checked={deliveryType === 'takeaway'}
+                    onChange={(e) => setDeliveryType(e.target.value as 'dine_in' | 'takeaway')}
+                    className="text-pink-600 focus:ring-pink-500"
+                  />
+                  <span className="text-gray-700">外帶</span>
+                </label>
+              </div>
+            </div>
+          )}
+
+          {/* 結帳按鈕 */}
+          {order.length > 0 && (
+            <button
+              className="bg-yellow-400 text-white px-4 py-2 rounded w-full text-lg font-bold mt-4 hover:bg-yellow-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              onClick={handleCheckout}
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? '處理中...' : `結帳 $${totalAmount}`}
+            </button>
+          )}
         </aside>
       </main>
     </div>
