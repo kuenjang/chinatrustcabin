@@ -19,11 +19,23 @@ export async function POST(request: NextRequest) {
       }, { status: 500 });
     }
 
+    // 使用台灣時區格式化時間
+    const taiwanTime = new Date().toLocaleString('zh-TW', {
+      timeZone: 'Asia/Taipei',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false
+    });
+
     const testMessage = `
 🧪 Telegram 通知測試
 
 📱 來源: ${process.env.NODE_ENV === 'production' ? 'Vercel 生產環境' : '本地開發環境'}
-⏰ 時間: ${new Date().toLocaleString('zh-TW')}
+⏰ 時間: ${taiwanTime} (台灣時間)
 🌐 環境: ${process.env.NODE_ENV || 'development'}
 
 ✅ 如果看到這則訊息，表示 Telegram 通知功能正常運作！
@@ -64,7 +76,8 @@ export async function POST(request: NextRequest) {
       success: true, 
       result,
       environment: process.env.NODE_ENV,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      taiwanTime: taiwanTime
     });
   } catch (error) {
     console.error('❌ Telegram 測試 API 錯誤:', error);
@@ -76,11 +89,27 @@ export async function POST(request: NextRequest) {
 }
 
 export async function GET() {
+  // 使用台灣時區格式化時間
+  const taiwanTime = new Date().toLocaleString('zh-TW', {
+    timeZone: 'Asia/Taipei',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false
+  });
+
   return NextResponse.json({
     message: 'Telegram 測試 API',
     usage: 'POST /api/test-telegram 來測試 Telegram 通知功能',
     environment: process.env.NODE_ENV,
     hasBotToken: !!process.env.TELEGRAM_BOT_TOKEN,
-    hasChatId: !!process.env.TELEGRAM_CHAT_ID
+    hasChatId: !!process.env.TELEGRAM_CHAT_ID,
+    currentTime: {
+      utc: new Date().toISOString(),
+      taiwan: taiwanTime
+    }
   });
 } 

@@ -68,6 +68,18 @@ export async function POST(request: NextRequest) {
 
     // 發送 Telegram 通知
     try {
+      // 使用台灣時區格式化時間
+      const taiwanTime = new Date().toLocaleString('zh-TW', {
+        timeZone: 'Asia/Taipei',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false
+      });
+
       const telegramMessage = `
 🆕 新訂單通知
 
@@ -82,7 +94,7 @@ ${items.map((item: any) => `• ${item.name} x${item.quantity} = NT$ ${item.quan
 
 ${note ? `📌 備註: ${note}` : ''}
 
-⏰ 下單時間: ${new Date().toLocaleString('zh-TW')}
+⏰ 下單時間: ${taiwanTime} (台灣時間)
       `;
 
       // 直接調用 Telegram API，不通過內部 API 路由
