@@ -13,26 +13,62 @@ interface MenuItem {
 }
 
 const menuItems: MenuItem[] = [
-  { id: 1, name: '蛋餅', price: 35, category: '早餐', description: '新鮮雞蛋配蔥花' },
-  { id: 2, name: '蔥抓餅', price: 30, category: '早餐', description: '香酥蔥抓餅' },
-  { id: 3, name: '燒餅油條', price: 25, category: '早餐', description: '傳統燒餅配油條' },
-  { id: 4, name: '豆漿', price: 20, category: '飲品', description: '濃郁豆漿' },
-  { id: 5, name: '米漿', price: 20, category: '飲品', description: '香甜米漿' },
-  { id: 6, name: '奶茶', price: 25, category: '飲品', description: '香濃奶茶' },
-  { id: 7, name: '紅茶', price: 20, category: '飲品', description: '清爽紅茶' },
-  { id: 8, name: '綠茶', price: 20, category: '飲品', description: '清香綠茶' },
-  { id: 9, name: '三明治', price: 40, category: '早餐', description: '火腿蛋三明治' },
-  { id: 10, name: '漢堡', price: 45, category: '早餐', description: '牛肉漢堡' },
-  { id: 11, name: '吐司', price: 15, category: '早餐', description: '烤吐司' },
-  { id: 12, name: '饅頭', price: 10, category: '早餐', description: '白饅頭' },
-  { id: 13, name: '包子', price: 20, category: '早餐', description: '肉包' },
-  { id: 14, name: '小籠包', price: 60, category: '早餐', description: '鮮肉小籠包' },
-  { id: 15, name: '煎餃', price: 50, category: '早餐', description: '韭菜煎餃' },
-  { id: 16, name: '鍋貼', price: 45, category: '早餐', description: '豬肉鍋貼' },
-  { id: 17, name: '蘿蔔糕', price: 35, category: '早餐', description: '港式蘿蔔糕' },
-  { id: 18, name: '腸粉', price: 40, category: '早餐', description: '蝦仁腸粉' },
-  { id: 19, name: '粥品', price: 30, category: '早餐', description: '皮蛋瘦肉粥' },
-  { id: 20, name: '油條', price: 15, category: '早餐', description: '酥脆油條' },
+  // 蛋餅類
+  { id: 1, name: '原味蛋餅', price: 20, category: '蛋餅', description: '經典原味蛋餅' },
+  { id: 2, name: '蔬菜蛋餅', price: 25, category: '蛋餅', description: '新鮮蔬菜蛋餅' },
+  { id: 3, name: '玉米蛋餅', price: 30, category: '蛋餅', description: '香甜玉米蛋餅' },
+  { id: 4, name: '肉鬆蛋餅', price: 30, category: '蛋餅', description: '香酥肉鬆蛋餅' },
+  { id: 5, name: '熱狗蛋餅', price: 30, category: '蛋餅', description: '熱狗蛋餅' },
+  { id: 6, name: '火腿蛋餅', price: 30, category: '蛋餅', description: '火腿蛋餅' },
+  { id: 7, name: '起司蛋餅', price: 30, category: '蛋餅', description: '濃郁起司蛋餅' },
+  { id: 8, name: '薯餅蛋餅', price: 35, category: '蛋餅', description: '香脆薯餅蛋餅' },
+  { id: 9, name: '鮪魚蛋餅', price: 35, category: '蛋餅', description: '鮮美鮪魚蛋餅' },
+
+  // 蔥抓餅類
+  { id: 10, name: '原味蔥抓餅', price: 30, category: '蔥抓餅', description: '經典原味蔥抓餅' },
+  { id: 11, name: '加蛋蔥抓餅', price: 40, category: '蔥抓餅', description: '加蛋蔥抓餅' },
+  { id: 12, name: '火腿蔥抓餅', price: 45, category: '蔥抓餅', description: '火腿蔥抓餅' },
+  { id: 13, name: '玉米蔥抓餅', price: 45, category: '蔥抓餅', description: '玉米蔥抓餅' },
+  { id: 14, name: '肉鬆蔥抓餅', price: 45, category: '蔥抓餅', description: '肉鬆蔥抓餅' },
+  { id: 15, name: '起司蔥抓餅', price: 45, category: '蔥抓餅', description: '起司蔥抓餅' },
+  { id: 16, name: '鮪魚蔥抓餅', price: 50, category: '蔥抓餅', description: '鮪魚蔥抓餅' },
+  { id: 17, name: '培根蔥抓餅', price: 50, category: '蔥抓餅', description: '培根蔥抓餅' },
+  { id: 18, name: '燒肉蔥抓餅', price: 55, category: '蔥抓餅', description: '燒肉蔥抓餅' },
+  { id: 19, name: '香雞蔥抓餅', price: 55, category: '蔥抓餅', description: '香雞蔥抓餅' },
+  { id: 20, name: '薯餅蔥抓餅', price: 55, category: '蔥抓餅', description: '薯餅蔥抓餅' },
+
+  // 鐵板麵類
+  { id: 21, name: '蘑菇麵', price: 40, category: '鐵板麵', description: '蘑菇鐵板麵 (+蛋10元)' },
+  { id: 22, name: '黑胡椒麵', price: 40, category: '鐵板麵', description: '黑胡椒鐵板麵 (+蛋10元)' },
+  { id: 23, name: '蕃茄肉醬麵', price: 40, category: '鐵板麵', description: '蕃茄肉醬鐵板麵 (+蛋10元)' },
+
+  // 厚片類
+  { id: 24, name: '巧克力厚片', price: 30, category: '厚片', description: '巧克力厚片吐司' },
+  { id: 25, name: '花生厚片', price: 30, category: '厚片', description: '花生厚片吐司' },
+  { id: 26, name: '草莓厚片', price: 30, category: '厚片', description: '草莓厚片吐司' },
+  { id: 27, name: '沙拉厚片', price: 30, category: '厚片', description: '沙拉厚片吐司' },
+  { id: 28, name: '奶酥厚片', price: 30, category: '厚片', description: '奶酥厚片吐司' },
+
+  // 飲料類
+  { id: 29, name: '紅茶', price: 20, category: '飲料', description: '中杯紅茶 (可選熱/冰)' },
+  { id: 30, name: '無糖綠茶', price: 20, category: '飲料', description: '中杯無糖綠茶 (可選熱/冰)' },
+  { id: 31, name: '奶茶', price: 25, category: '飲料', description: '中杯奶茶 (可選熱/冰)' },
+  { id: 32, name: '豆漿', price: 25, category: '飲料', description: '中杯豆漿 (可選熱/冰)' },
+  { id: 33, name: '蘋果紅茶', price: 25, category: '飲料', description: '中杯蘋果紅茶 (可選熱/冰)' },
+  { id: 34, name: '可可亞', price: 35, category: '飲料', description: '中杯可可亞 (可選熱/冰)' },
+  { id: 35, name: '鮮奶茶', price: 35, category: '飲料', description: '中杯鮮奶茶 (可選熱/冰)' },
+
+  // 大杯飲料
+  { id: 36, name: '大杯紅茶', price: 25, category: '大杯飲料', description: '大杯紅茶 (可選熱/冰)' },
+  { id: 37, name: '大杯奶茶', price: 30, category: '大杯飲料', description: '大杯奶茶 (可選熱/冰)' },
+  { id: 38, name: '大杯豆漿', price: 30, category: '大杯飲料', description: '大杯豆漿 (可選熱/冰)' },
+  { id: 39, name: '大杯蘋果紅茶', price: 30, category: '大杯飲料', description: '大杯蘋果紅茶 (可選熱/冰)' },
+  { id: 40, name: '大杯可可亞', price: 40, category: '大杯飲料', description: '大杯可可亞 (可選熱/冰)' },
+  { id: 41, name: '大杯鮮奶茶', price: 40, category: '大杯飲料', description: '大杯鮮奶茶 (可選熱/冰)' },
+
+  // 咖啡類
+  { id: 42, name: '熱咖啡', price: 40, category: '咖啡', description: '研磨咖啡' },
+  { id: 43, name: '特調冰咖啡', price: 40, category: '咖啡', description: '特調冰咖啡' },
 ];
 
 export default function HomePage() {
