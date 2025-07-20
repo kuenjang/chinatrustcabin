@@ -79,17 +79,12 @@ const menuItems: MenuItem[] = [
   { id: 36, name: '大杯紅茶', price: 25, category: '飲料', description: '大杯紅茶 (可選熱/冰)' },
   { id: 37, name: '無糖綠茶', price: 20, category: '飲料', description: '中杯無糖綠茶 (可選熱/冰)' },
   { id: 38, name: '奶茶', price: 25, category: '飲料', description: '中杯奶茶 (可選熱/冰)' },
-  { id: 39, name: '大杯奶茶', price: 30, category: '飲料', description: '大杯奶茶 (可選熱/冰)' },
-  { id: 40, name: '豆漿', price: 25, category: '飲料', description: '中杯豆漿 (可選熱/冰)' },
-  { id: 41, name: '大杯豆漿', price: 30, category: '飲料', description: '大杯豆漿 (可選熱/冰)' },
-  { id: 42, name: '蘋果紅茶', price: 25, category: '飲料', description: '中杯蘋果紅茶 (可選熱/冰)' },
-  { id: 43, name: '大杯蘋果紅茶', price: 30, category: '飲料', description: '大杯蘋果紅茶 (可選熱/冰)' },
-  { id: 44, name: '可可亞', price: 35, category: '飲料', description: '中杯可可亞 (可選熱/冰)' },
-  { id: 45, name: '大杯可可亞', price: 40, category: '飲料', description: '大杯可可亞 (可選熱/冰)' },
-  { id: 46, name: '鮮奶茶', price: 35, category: '飲料', description: '中杯鮮奶茶 (可選熱/冰)' },
-  { id: 47, name: '大杯鮮奶茶', price: 40, category: '飲料', description: '大杯鮮奶茶 (可選熱/冰)' },
-  { id: 48, name: '熱咖啡', price: 40, category: '飲料', description: '研磨咖啡' },
-  { id: 49, name: '特調冰咖啡', price: 40, category: '飲料', description: '特調冰咖啡' },
+  { id: 39, name: '豆漿', price: 25, category: '飲料', description: '中杯豆漿 (可選熱/冰)' },
+  { id: 40, name: '蘋果紅茶', price: 25, category: '飲料', description: '中杯蘋果紅茶 (可選熱/冰)' },
+  { id: 41, name: '可可亞', price: 35, category: '飲料', description: '中杯可可亞 (可選熱/冰)' },
+  { id: 42, name: '鮮奶茶', price: 35, category: '飲料', description: '中杯鮮奶茶 (可選熱/冰)' },
+  { id: 43, name: '熱咖啡', price: 40, category: '飲料', description: '研磨咖啡' },
+  { id: 44, name: '特調冰咖啡', price: 40, category: '飲料', description: '特調冰咖啡' },
 ];
 
 export default function HomePage() {
