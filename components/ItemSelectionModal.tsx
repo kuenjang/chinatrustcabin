@@ -30,11 +30,6 @@ const ItemSelectionModal: React.FC<ItemSelectionModalProps> = ({
     if (!item) return [];
     
     switch (item.category) {
-      case '飲料':
-        return [
-          { value: '中杯', label: '中杯' },
-          { value: '大杯', label: '大杯 (+5元)' }
-        ];
       case '蛋餅':
       case '炒飯麵類':
       case '鐵板麵類':
@@ -46,7 +41,7 @@ const ItemSelectionModal: React.FC<ItemSelectionModalProps> = ({
           { value: '大份', label: '大份 (+10元)' }
         ];
       default:
-        return []; // 蔥抓餅、厚片等不需要大小選擇
+        return []; // 飲料、蔥抓餅、厚片等不需要大小選擇
     }
   };
 
