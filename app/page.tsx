@@ -13,23 +13,26 @@ interface MenuItem {
 }
 
 const menuItems: MenuItem[] = [
-  { id: 1, name: '招牌包廂蝦仁粉', price: 120, category: '主食', description: '新鮮蝦仁配特製醬料' },
-  { id: 2, name: '招牌肥腸麵疙瘩', price: 130, category: '主食', description: '香嫩肥腸配手工麵疙瘩' },
-  { id: 3, name: '媽媽川香麵疙瘩', price: 110, category: '主食', description: '川式香辣口味' },
-  { id: 4, name: '番茄雞蛋麵疙瘩', price: 100, category: '主食', description: '經典番茄炒蛋口味' },
-  { id: 5, name: '鮮香肥腸蝦仁粉', price: 140, category: '主食', description: '肥腸與蝦仁的完美結合' },
-  { id: 6, name: '涼拌海帶', price: 60, category: '小菜', description: '清爽開胃' },
-  { id: 7, name: '涼拌黃瓜木耳', price: 50, category: '小菜', description: '爽脆可口' },
-  { id: 8, name: '涼拌花椰菜', price: 55, category: '小菜', description: '營養豐富' },
-  { id: 9, name: '涼拌蓮藕', price: 65, category: '小菜', description: '清脆爽口' },
-  { id: 10, name: '涼拌豬耳朵', price: 70, category: '小菜', description: '香辣有嚼勁' },
-  { id: 11, name: '醬大骨', price: 80, category: '小菜', description: '濃郁醬香' },
-  { id: 12, name: '雞腳', price: 75, category: '小菜', description: '膠質豐富' },
-  { id: 13, name: '香爐肥腸', price: 90, category: '小菜', description: '香辣過癮' },
-  { id: 14, name: '酸辣涼粉', price: 60, category: '小菜', description: '酸辣開胃' },
-  { id: 15, name: '檸檬紅茶', price: 40, category: '飲品', description: '清爽解膩' },
-  { id: 16, name: '養生菊花茶', price: 45, category: '飲品', description: '清熱降火' },
-  { id: 17, name: '可樂', price: 35, category: '飲品', description: '經典碳酸飲料' },
+  { id: 1, name: '蛋餅', price: 35, category: '早餐', description: '新鮮雞蛋配蔥花' },
+  { id: 2, name: '蔥抓餅', price: 30, category: '早餐', description: '香酥蔥抓餅' },
+  { id: 3, name: '燒餅油條', price: 25, category: '早餐', description: '傳統燒餅配油條' },
+  { id: 4, name: '豆漿', price: 20, category: '飲品', description: '濃郁豆漿' },
+  { id: 5, name: '米漿', price: 20, category: '飲品', description: '香甜米漿' },
+  { id: 6, name: '奶茶', price: 25, category: '飲品', description: '香濃奶茶' },
+  { id: 7, name: '紅茶', price: 20, category: '飲品', description: '清爽紅茶' },
+  { id: 8, name: '綠茶', price: 20, category: '飲品', description: '清香綠茶' },
+  { id: 9, name: '三明治', price: 40, category: '早餐', description: '火腿蛋三明治' },
+  { id: 10, name: '漢堡', price: 45, category: '早餐', description: '牛肉漢堡' },
+  { id: 11, name: '吐司', price: 15, category: '早餐', description: '烤吐司' },
+  { id: 12, name: '饅頭', price: 10, category: '早餐', description: '白饅頭' },
+  { id: 13, name: '包子', price: 20, category: '早餐', description: '肉包' },
+  { id: 14, name: '小籠包', price: 60, category: '早餐', description: '鮮肉小籠包' },
+  { id: 15, name: '煎餃', price: 50, category: '早餐', description: '韭菜煎餃' },
+  { id: 16, name: '鍋貼', price: 45, category: '早餐', description: '豬肉鍋貼' },
+  { id: 17, name: '蘿蔔糕', price: 35, category: '早餐', description: '港式蘿蔔糕' },
+  { id: 18, name: '腸粉', price: 40, category: '早餐', description: '蝦仁腸粉' },
+  { id: 19, name: '粥品', price: 30, category: '早餐', description: '皮蛋瘦肉粥' },
+  { id: 20, name: '油條', price: 15, category: '早餐', description: '酥脆油條' },
 ];
 
 export default function HomePage() {
@@ -139,7 +142,7 @@ export default function HomePage() {
               <span className={`text-sm ${
                 isDarkMode ? 'text-gray-300' : 'text-gray-600'
               }`}>
-                線上訂餐系統 - 部署測試
+                早餐店線上訂餐系統
               </span>
             </div>
             
