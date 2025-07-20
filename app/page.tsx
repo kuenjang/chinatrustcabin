@@ -5,7 +5,7 @@ import OrderSidebar from '../components/OrderSidebar';
 import Link from 'next/link';
 
 // 部署版本標記 - 強制重新部署
-const DEPLOY_VERSION = 'v1.0.1';
+const DEPLOY_VERSION = 'v1.0.2';
 
 // 分類商品資料
 const menuList = [
