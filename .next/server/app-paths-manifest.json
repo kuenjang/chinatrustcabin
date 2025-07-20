@@ -1,1 +1,8 @@
-{}
+{
+  "/test-order/page": "app/test-order/page.js",
+  "/api/orders/route": "app/api/orders/route.js",
+  "/api/telegram/route": "app/api/telegram/route.js",
+  "/api/debug-order/route": "app/api/debug-order/route.js",
+  "/admin/page": "app/admin/page.js",
+  "/page": "app/page.js"
+}
