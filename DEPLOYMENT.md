@@ -22,43 +22,30 @@ TELEGRAM_CHAT_ID=your_chat_id_here
 # 應用程式基礎 URL (Vercel 會自動設定)
 NEXT_PUBLIC_BASE_URL=https://your-project-name.vercel.app
 
-# Supabase 設定
-NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
-SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
+# Supabase 設定 (已設定完成)
+NEXT_PUBLIC_SUPABASE_URL=https://rjfpddvihfolmmeqcrwk.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJqZnBkZHZpaGZvbG1tZXFjcndrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI5NzQ1MTEsImV4cCI6MjA2ODU1MDUxMX0.VBuB8vOrVKf0tIRDewoCzoayCnVTENebCGnuQIRQciw
+SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJqZnBkZHZpaGZvbG1tZXFjcndrIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1Mjk3NDUxMSwiZXhwIjoyMDY4NTUwNTExfQ.E7n7Y-vPho_CFiG5rAW4plE_Sn_qybc52jb3E7kzz3A
 ```
 
 ### 3. 自動部署
 
 設定完成後，每次推送到 `master` 分支都會自動觸發部署。
 
-## Supabase 新專案設定
+## Supabase 專案設定 (已完成)
 
-### 1. 創建新的 Supabase 專案
+### ✅ 專案資訊
+- **專案名稱**: chinatrustcabin
+- **專案 URL**: https://rjfpddvihfolmmeqcrwk.supabase.co
+- **專案 ID**: rjfpddvihfolmmeqcrwk
 
-1. 前往 [Supabase Dashboard](https://supabase.com/dashboard)
-2. 點擊 "New Project"
-3. 選擇組織
-4. 輸入專案名稱：`chinatrustcabin`
-5. 設定資料庫密碼
-6. 選擇地區（建議選擇離您最近的）
-7. 點擊 "Create new project"
-
-### 2. 獲取專案設定
-
-專案創建完成後，在 Settings > API 中獲取：
-
-- Project URL
-- anon public key
-- service_role key
-
-### 3. 設定資料庫結構
+### 設定資料庫結構
 
 在 Supabase SQL Editor 中執行以下 SQL：
 
 ```sql
 -- 創建訂單表
-CREATE TABLE orders (
+CREATE TABLE IF NOT EXISTS orders (
   id SERIAL PRIMARY KEY,
   order_number VARCHAR(50) UNIQUE NOT NULL,
   channel_code VARCHAR(10) NOT NULL,
@@ -74,7 +61,7 @@ CREATE TABLE orders (
 );
 
 -- 創建訂單項目表
-CREATE TABLE order_items (
+CREATE TABLE IF NOT EXISTS order_items (
   id SERIAL PRIMARY KEY,
   order_id INTEGER REFERENCES orders(id) ON DELETE CASCADE,
   name VARCHAR(100) NOT NULL,
@@ -85,31 +72,42 @@ CREATE TABLE order_items (
 );
 
 -- 創建索引
-CREATE INDEX idx_orders_order_number ON orders(order_number);
-CREATE INDEX idx_orders_created_at ON orders(created_at);
-CREATE INDEX idx_order_items_order_id ON order_items(order_id);
+CREATE INDEX IF NOT EXISTS idx_orders_order_number ON orders(order_number);
+CREATE INDEX IF NOT EXISTS idx_orders_created_at ON orders(created_at);
+CREATE INDEX IF NOT EXISTS idx_order_items_order_id ON order_items(order_id);
 
 -- 啟用 Row Level Security (RLS)
 ALTER TABLE orders ENABLE ROW LEVEL SECURITY;
 ALTER TABLE order_items ENABLE ROW LEVEL SECURITY;
 
 -- 創建策略（允許所有操作，實際使用時應該更嚴格）
+DROP POLICY IF EXISTS "Allow all operations on orders" ON orders;
 CREATE POLICY "Allow all operations on orders" ON orders FOR ALL USING (true);
+
+DROP POLICY IF EXISTS "Allow all operations on order_items" ON order_items;
 CREATE POLICY "Allow all operations on order_items" ON order_items FOR ALL USING (true);
+
+-- 創建更新時間觸發器
+CREATE OR REPLACE FUNCTION update_updated_at_column()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = NOW();
+    RETURN NEW;
+END;
+$$ language 'plpgsql';
+
+CREATE TRIGGER update_orders_updated_at BEFORE UPDATE ON orders
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 ```
 
-### 4. 更新 Supabase 客戶端設定
+### 快速執行 SQL 的步驟：
 
-確保 `lib/supabaseClient.ts` 使用新的專案設定：
-
-```typescript
-import { createClient } from '@supabase/supabase-js'
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
-```
+1. 前往 [Supabase Dashboard](https://supabase.com/dashboard)
+2. 選擇 `chinatrustcabin` 專案
+3. 點擊左側選單的 "SQL Editor"
+4. 點擊 "New query"
+5. 複製上面的 SQL 代碼並貼上
+6. 點擊 "Run" 執行
 
 ## Telegram Bot 設定
 
@@ -136,9 +134,20 @@ npm install
 
 ### 2. 設定環境變數
 
+創建 `.env.local` 文件並填入：
+
 ```bash
-cp env.example .env.local
-# 編輯 .env.local 填入實際值
+# Telegram Bot 設定
+TELEGRAM_BOT_TOKEN=your_telegram_bot_token_here
+TELEGRAM_CHAT_ID=your_chat_id_here
+
+# 應用程式基礎 URL
+NEXT_PUBLIC_BASE_URL=http://localhost:3000
+
+# Supabase 設定 (已設定完成)
+NEXT_PUBLIC_SUPABASE_URL=https://rjfpddvihfolmmeqcrwk.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJqZnBkZHZpaGZvbG1tZXFjcndrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI5NzQ1MTEsImV4cCI6MjA2ODU1MDUxMX0.VBuB8vOrVKf0tIRDewoCzoayCnVTENebCGnuQIRQciw
+SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJqZnBkZHZpaGZvbG1tZXFjcndrIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1Mjk3NDUxMSwiZXhwIjoyMDY4NTUwNTExfQ.E7n7Y-vPho_CFiG5rAW4plE_Sn_qybc52jb3E7kzz3A
 ```
 
 ### 3. 啟動開發伺服器
