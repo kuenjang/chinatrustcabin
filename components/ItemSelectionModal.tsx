@@ -31,7 +31,6 @@ const ItemSelectionModal: React.FC<ItemSelectionModalProps> = ({
     
     switch (item.category) {
       case '飲料':
-      case '大杯飲料':
         return [
           { value: '中杯', label: '中杯' },
           { value: '大杯', label: '大杯 (+5元)' }
@@ -39,6 +38,9 @@ const ItemSelectionModal: React.FC<ItemSelectionModalProps> = ({
       case '蛋餅':
       case '炒飯麵類':
       case '鐵板麵類':
+      case '鍋燒系列':
+      case '飯類':
+      case '水餃類':
         return [
           { value: '小份', label: '小份' },
           { value: '大份', label: '大份 (+10元)' }

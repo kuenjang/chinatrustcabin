@@ -44,47 +44,52 @@ const menuItems: MenuItem[] = [
   { id: 15, name: '起司蔥抓餅', price: 45, category: '蔥抓餅', description: '起司蔥抓餅' },
   { id: 16, name: '鮪魚蔥抓餅', price: 50, category: '蔥抓餅', description: '鮪魚蔥抓餅' },
   { id: 17, name: '培根蔥抓餅', price: 50, category: '蔥抓餅', description: '培根蔥抓餅' },
-  { id: 18, name: '燒肉蔥抓餅', price: 55, category: '蔥抓餅', description: '燒肉蔥抓餅' },
-  { id: 19, name: '香雞蔥抓餅', price: 55, category: '蔥抓餅', description: '香雞蔥抓餅' },
-  { id: 20, name: '薯餅蔥抓餅', price: 55, category: '蔥抓餅', description: '薯餅蔥抓餅' },
+  { id: 18, name: '薯餅蔥抓餅', price: 55, category: '蔥抓餅', description: '薯餅蔥抓餅' },
 
   // 炒飯麵類
-  { id: 21, name: '炒飯', price: 60, category: '炒飯麵類', description: '香噴噴的炒飯，配料豐富' },
-  { id: 22, name: '炒泡麵', price: 50, category: '炒飯麵類', description: 'Q彈炒泡麵，香辣可口' },
-  { id: 23, name: '炒意麵', price: 55, category: '炒飯麵類', description: '義大利麵炒製，口感絕佳' },
+  { id: 19, name: '炒飯', price: 60, category: '炒飯麵類', description: '香噴噴的炒飯，配料豐富' },
+  { id: 20, name: '炒泡麵', price: 50, category: '炒飯麵類', description: 'Q彈炒泡麵，香辣可口' },
+  { id: 21, name: '炒意麵', price: 55, category: '炒飯麵類', description: '義大利麵炒製，口感絕佳' },
+
+  // 鍋燒系列
+  { id: 22, name: '鍋燒意麵', price: 70, category: '鍋燒系列', description: '熱騰騰的鍋燒意麵，湯頭濃郁' },
+  { id: 23, name: '鍋燒雞絲', price: 75, category: '鍋燒系列', description: '鮮嫩雞絲鍋燒，營養美味' },
+  { id: 24, name: '鍋燒烏龍麵', price: 70, category: '鍋燒系列', description: 'Q彈烏龍麵，湯頭鮮美' },
+  { id: 25, name: '鍋燒泡麵', price: 65, category: '鍋燒系列', description: '經典鍋燒泡麵，香辣過癮' },
+
+  // 飯類
+  { id: 26, name: '雞肉飯', price: 60, category: '飯類', description: '香嫩雞肉飯，配菜豐富' },
+  { id: 27, name: '肉燥飯', price: 55, category: '飯類', description: '傳統肉燥飯，香濃可口' },
+
+  // 水餃類
+  { id: 28, name: '水餃', price: 50, category: '水餃類', description: '手工水餃，皮薄餡多' },
 
   // 鐵板麵類
-  { id: 24, name: '蘑菇麵', price: 40, category: '鐵板麵', description: '蘑菇鐵板麵 (+蛋10元)' },
-  { id: 25, name: '黑胡椒麵', price: 40, category: '鐵板麵', description: '黑胡椒鐵板麵 (+蛋10元)' },
-  { id: 26, name: '蕃茄肉醬麵', price: 40, category: '鐵板麵', description: '蕃茄肉醬鐵板麵 (+蛋10元)' },
+  { id: 29, name: '蘑菇麵', price: 40, category: '鐵板麵', description: '蘑菇鐵板麵 (+蛋10元)' },
+  { id: 30, name: '黑胡椒麵', price: 40, category: '鐵板麵', description: '黑胡椒鐵板麵 (+蛋10元)' },
+  { id: 31, name: '蕃茄肉醬麵', price: 40, category: '鐵板麵', description: '蕃茄肉醬鐵板麵 (+蛋10元)' },
 
   // 厚片類
-  { id: 27, name: '巧克力厚片', price: 30, category: '厚片', description: '巧克力厚片吐司' },
-  { id: 28, name: '花生厚片', price: 30, category: '厚片', description: '花生厚片吐司' },
-  { id: 29, name: '草莓厚片', price: 30, category: '厚片', description: '草莓厚片吐司' },
-  { id: 30, name: '沙拉厚片', price: 30, category: '厚片', description: '沙拉厚片吐司' },
-  { id: 31, name: '奶酥厚片', price: 30, category: '厚片', description: '奶酥厚片吐司' },
+  { id: 32, name: '巧克力厚片', price: 30, category: '厚片', description: '巧克力厚片吐司' },
+  { id: 33, name: '花生厚片', price: 30, category: '厚片', description: '花生厚片吐司' },
+  { id: 34, name: '奶酥厚片', price: 30, category: '厚片', description: '奶酥厚片吐司' },
 
   // 飲料類
-  { id: 32, name: '紅茶', price: 20, category: '飲料', description: '中杯紅茶 (可選熱/冰)' },
-  { id: 33, name: '無糖綠茶', price: 20, category: '飲料', description: '中杯無糖綠茶 (可選熱/冰)' },
-  { id: 34, name: '奶茶', price: 25, category: '飲料', description: '中杯奶茶 (可選熱/冰)' },
-  { id: 35, name: '豆漿', price: 25, category: '飲料', description: '中杯豆漿 (可選熱/冰)' },
-  { id: 36, name: '蘋果紅茶', price: 25, category: '飲料', description: '中杯蘋果紅茶 (可選熱/冰)' },
-  { id: 37, name: '可可亞', price: 35, category: '飲料', description: '中杯可可亞 (可選熱/冰)' },
-  { id: 38, name: '鮮奶茶', price: 35, category: '飲料', description: '中杯鮮奶茶 (可選熱/冰)' },
-
-  // 大杯飲料
-  { id: 39, name: '大杯紅茶', price: 25, category: '大杯飲料', description: '大杯紅茶 (可選熱/冰)' },
-  { id: 40, name: '大杯奶茶', price: 30, category: '大杯飲料', description: '大杯奶茶 (可選熱/冰)' },
-  { id: 41, name: '大杯豆漿', price: 30, category: '大杯飲料', description: '大杯豆漿 (可選熱/冰)' },
-  { id: 42, name: '大杯蘋果紅茶', price: 30, category: '大杯飲料', description: '大杯蘋果紅茶 (可選熱/冰)' },
-  { id: 43, name: '大杯可可亞', price: 40, category: '大杯飲料', description: '大杯可可亞 (可選熱/冰)' },
-  { id: 44, name: '大杯鮮奶茶', price: 40, category: '大杯飲料', description: '大杯鮮奶茶 (可選熱/冰)' },
-
-  // 咖啡類
-  { id: 45, name: '熱咖啡', price: 40, category: '咖啡', description: '研磨咖啡' },
-  { id: 46, name: '特調冰咖啡', price: 40, category: '咖啡', description: '特調冰咖啡' },
+  { id: 35, name: '紅茶', price: 20, category: '飲料', description: '中杯紅茶 (可選熱/冰)' },
+  { id: 36, name: '大杯紅茶', price: 25, category: '飲料', description: '大杯紅茶 (可選熱/冰)' },
+  { id: 37, name: '無糖綠茶', price: 20, category: '飲料', description: '中杯無糖綠茶 (可選熱/冰)' },
+  { id: 38, name: '奶茶', price: 25, category: '飲料', description: '中杯奶茶 (可選熱/冰)' },
+  { id: 39, name: '大杯奶茶', price: 30, category: '飲料', description: '大杯奶茶 (可選熱/冰)' },
+  { id: 40, name: '豆漿', price: 25, category: '飲料', description: '中杯豆漿 (可選熱/冰)' },
+  { id: 41, name: '大杯豆漿', price: 30, category: '飲料', description: '大杯豆漿 (可選熱/冰)' },
+  { id: 42, name: '蘋果紅茶', price: 25, category: '飲料', description: '中杯蘋果紅茶 (可選熱/冰)' },
+  { id: 43, name: '大杯蘋果紅茶', price: 30, category: '飲料', description: '大杯蘋果紅茶 (可選熱/冰)' },
+  { id: 44, name: '可可亞', price: 35, category: '飲料', description: '中杯可可亞 (可選熱/冰)' },
+  { id: 45, name: '大杯可可亞', price: 40, category: '飲料', description: '大杯可可亞 (可選熱/冰)' },
+  { id: 46, name: '鮮奶茶', price: 35, category: '飲料', description: '中杯鮮奶茶 (可選熱/冰)' },
+  { id: 47, name: '大杯鮮奶茶', price: 40, category: '飲料', description: '大杯鮮奶茶 (可選熱/冰)' },
+  { id: 48, name: '熱咖啡', price: 40, category: '飲料', description: '研磨咖啡' },
+  { id: 49, name: '特調冰咖啡', price: 40, category: '飲料', description: '特調冰咖啡' },
 ];
 
 export default function HomePage() {
