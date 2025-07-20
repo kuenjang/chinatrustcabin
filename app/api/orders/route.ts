@@ -1,137 +1,115 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { OrderNumberService } from '../../../lib/orderNumberService';
+import { supabase } from '../../../lib/supabaseClient';
+import { generateOrderNumber } from '../../../lib/orderNumberService';
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    
-    // 驗證必要欄位
-    if (!body.items || body.items.length === 0) {
-      return NextResponse.json(
-        { error: '訂單項目不能為空' },
-        { status: 400 }
-      );
-    }
+    const { customer_name, customer_phone, customer_address, note, total_amount, items } = body;
 
-    if (!body.channel_code) {
-      return NextResponse.json(
-        { error: '必須指定訂餐通道' },
-        { status: 400 }
-      );
-    }
+    // 生成訂單號碼
+    const order_number = generateOrderNumber();
 
-    // 驗證通道代碼
-    if (!['ON', 'WA'].includes(body.channel_code)) {
-      return NextResponse.json(
-        { error: '不支援的訂餐通道，請使用 ON (線上點餐) 或 WA (現場點餐)' },
-        { status: 400 }
-      );
-    }
-
-    // 計算總金額
-    const totalAmount = body.items.reduce((sum: number, item: any) => {
-      return sum + (item.price * item.quantity);
-    }, 0);
-
-    // 建立訂單資料
-    const orderData = {
-      channel_code: body.channel_code,
-      customer_name: body.customer_name,
-      customer_phone: body.customer_phone,
-      total_amount: totalAmount,
-      payment_method: body.payment_method || 'cash',
-      delivery_type: body.delivery_type || 'dine_in',
-      special_notes: body.special_notes,
-      items: body.items.map((item: any) => ({
-        name: item.name,
-        price: item.price,
-        quantity: item.quantity,
-        notes: item.note
-      }))
-    };
-
-    // 使用 OrderNumberService 建立訂單
-    const result = await OrderNumberService.createOrder(orderData);
-
-    if (result.success) {
-      // 發送 Telegram 通知
-      try {
-        console.log('準備發送 Telegram 通知...');
-        console.log('訂單資料:', {
-          order: body.items,
-          order_number: result.order_number,
-          total_amount: totalAmount,
-          delivery_type: body.delivery_type || 'dine_in'
-        });
-
-        const telegramResponse = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/telegram`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            order: body.items,
-            order_number: result.order_number,
-            total_amount: totalAmount,
-            delivery_type: body.delivery_type || 'dine_in'
-          }),
-        });
-
-        const telegramResult = await telegramResponse.json();
-        console.log('Telegram 回應:', telegramResult);
-
-        if (!telegramResponse.ok) {
-          console.warn('Telegram 通知發送失敗:', telegramResult);
-        } else {
-          console.log('Telegram 通知發送成功');
+    // 插入訂單
+    const { data: order, error: orderError } = await supabase
+      .from('orders')
+      .insert([
+        {
+          order_number,
+          customer_name,
+          customer_phone,
+          customer_address,
+          note,
+          total_amount,
+          status: 'pending'
         }
-      } catch (telegramError) {
-        console.warn('Telegram 通知發送失敗:', telegramError);
-        // 不中斷訂單建立流程，只記錄警告
-      }
+      ])
+      .select()
+      .single();
 
-      return NextResponse.json({
-        success: true,
-        order_number: result.order_number,
-        order_id: result.order_id,
-        message: '訂單建立成功'
-      });
-    } else {
-      return NextResponse.json(
-        { error: result.error },
-        { status: 500 }
-      );
+    if (orderError) {
+      console.error('訂單插入錯誤:', orderError);
+      return NextResponse.json({ error: '訂單創建失敗' }, { status: 500 });
     }
 
-  } catch (error) {
-    console.error('建立訂單失敗:', error);
-    return NextResponse.json(
-      { error: '伺服器錯誤' },
-      { status: 500 }
-    );
-  }
-}
+    // 插入訂單項目
+    const orderItems = items.map((item: any) => ({
+      order_id: order.id,
+      menu_item_name: item.name,
+      quantity: item.quantity,
+      price: item.price,
+      subtotal: item.quantity * item.price
+    }));
 
-export async function GET(request: NextRequest) {
-  try {
-    const { searchParams } = new URL(request.url);
-    const channel = searchParams.get('channel');
-    const status = searchParams.get('status');
-    const limit = parseInt(searchParams.get('limit') || '50');
+    const { error: itemsError } = await supabase
+      .from('order_items')
+      .insert(orderItems);
 
-    // 這裡可以實作訂單查詢功能
-    // 目前先回傳基本資訊
-    return NextResponse.json({
-      message: '訂單查詢功能開發中',
-      filters: { channel, status, limit },
-      supported_channels: ['ON', 'WA']
+    if (itemsError) {
+      console.error('訂單項目插入錯誤:', itemsError);
+      return NextResponse.json({ error: '訂單項目創建失敗' }, { status: 500 });
+    }
+
+    // 發送 Telegram 通知
+    try {
+      const telegramMessage = `
+🆕 新訂單通知
+
+📋 訂單號碼: ${order_number}
+👤 客戶姓名: ${customer_name}
+📞 電話: ${customer_phone}
+📍 地址: ${customer_address || '無'}
+💰 總金額: NT$ ${total_amount}
+
+📝 訂單內容:
+${items.map((item: any) => `• ${item.name} x${item.quantity} = NT$ ${item.quantity * item.price}`).join('\n')}
+
+${note ? `📌 備註: ${note}` : ''}
+
+⏰ 下單時間: ${new Date().toLocaleString('zh-TW')}
+      `;
+
+      await fetch('/api/telegram', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ message: telegramMessage }),
+      });
+    } catch (telegramError) {
+      console.error('Telegram 通知發送失敗:', telegramError);
+    }
+
+    return NextResponse.json({ 
+      success: true, 
+      order_number,
+      order_id: order.id 
     });
 
   } catch (error) {
-    console.error('查詢訂單失敗:', error);
-    return NextResponse.json(
-      { error: '伺服器錯誤' },
-      { status: 500 }
-    );
+    console.error('API 錯誤:', error);
+    return NextResponse.json({ error: '伺服器錯誤' }, { status: 500 });
+  }
+}
+
+export async function GET() {
+  try {
+    const { data: orders, error } = await supabase
+      .from('orders')
+      .select(`
+        *,
+        order_items (*)
+      `)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('查詢訂單錯誤:', error);
+      return NextResponse.json({ error: '查詢訂單失敗' }, { status: 500 });
+    }
+
+    return NextResponse.json({ orders });
+  } catch (error) {
+    console.error('API 錯誤:', error);
+    return NextResponse.json({ error: '伺服器錯誤' }, { status: 500 });
   }
 } 

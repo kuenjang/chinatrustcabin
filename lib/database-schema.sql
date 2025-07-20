@@ -10,31 +10,29 @@ CREATE TABLE order_channels (
     created_at TIMESTAMP DEFAULT NOW()
 );
 
--- 2. 訂單主表
-CREATE TABLE orders (
-    id SERIAL PRIMARY KEY,
-    order_number VARCHAR(20) UNIQUE NOT NULL, -- 訂單號 (YYYYMMDD-CH-001)
-    channel_id INTEGER REFERENCES order_channels(id),
-    customer_name VARCHAR(100),
-    customer_phone VARCHAR(20),
-    total_amount DECIMAL(10,2) NOT NULL,
-    status VARCHAR(20) DEFAULT 'pending', -- pending, processing, completed, cancelled
-    payment_method VARCHAR(20) DEFAULT 'cash', -- cash, card, online
-    delivery_type VARCHAR(20) DEFAULT 'dine_in', -- dine_in, takeaway
-    special_notes TEXT,
-    created_at TIMESTAMP DEFAULT NOW(),
-    updated_at TIMESTAMP DEFAULT NOW()
+-- 建立訂單表
+CREATE TABLE IF NOT EXISTS orders (
+  id SERIAL PRIMARY KEY,
+  order_number VARCHAR(50) UNIQUE NOT NULL,
+  customer_name VARCHAR(100) NOT NULL,
+  customer_phone VARCHAR(20) NOT NULL,
+  customer_address TEXT,
+  note TEXT,
+  total_amount DECIMAL(10,2) NOT NULL,
+  status VARCHAR(20) DEFAULT 'pending',
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- 3. 訂單明細表
-CREATE TABLE order_items (
-    id SERIAL PRIMARY KEY,
-    order_id INTEGER REFERENCES orders(id) ON DELETE CASCADE,
-    item_name VARCHAR(100) NOT NULL,
-    item_price DECIMAL(10,2) NOT NULL,
-    quantity INTEGER NOT NULL,
-    special_notes TEXT,
-    created_at TIMESTAMP DEFAULT NOW()
+-- 建立訂單項目表
+CREATE TABLE IF NOT EXISTS order_items (
+  id SERIAL PRIMARY KEY,
+  order_id INTEGER REFERENCES orders(id) ON DELETE CASCADE,
+  menu_item_name VARCHAR(100) NOT NULL,
+  quantity INTEGER NOT NULL,
+  price DECIMAL(10,2) NOT NULL,
+  subtotal DECIMAL(10,2) NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
 -- 4. 叫號系統表
@@ -70,3 +68,17 @@ CREATE INDEX idx_orders_status ON orders(status);
 CREATE INDEX idx_orders_created_at ON orders(created_at);
 CREATE INDEX idx_queue_numbers_status ON queue_numbers(status);
 CREATE INDEX idx_daily_counters_date_channel ON daily_counters(date, channel_code); 
+
+-- 建立更新時間的觸發器
+CREATE OR REPLACE FUNCTION update_updated_at_column()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = NOW();
+    RETURN NEW;
+END;
+$$ language 'plpgsql';
+
+CREATE TRIGGER update_orders_updated_at 
+    BEFORE UPDATE ON orders 
+    FOR EACH ROW 
+    EXECUTE FUNCTION update_updated_at_column(); 

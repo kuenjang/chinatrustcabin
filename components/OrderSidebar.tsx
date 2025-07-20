@@ -12,9 +12,10 @@ interface OrderSidebarProps {
   onChangeQty: (name: string, qty: number) => void;
   onRemove: (name: string) => void;
   onChangeNote: (name: string, note: string) => void;
+  onCheckout?: () => void;
 }
 
-const OrderSidebar: React.FC<OrderSidebarProps> = ({ order, onChangeQty, onRemove, onChangeNote }) => {
+const OrderSidebar: React.FC<OrderSidebarProps> = ({ order, onChangeQty, onRemove, onChangeNote, onCheckout }) => {
   const total = order.reduce((sum, item) => sum + item.price * item.qty, 0);
 
   // 判斷商品類型的函數
@@ -111,10 +112,21 @@ const OrderSidebar: React.FC<OrderSidebarProps> = ({ order, onChangeQty, onRemov
       <hr className="my-4 border-gray-200 dark:border-gray-700" />
       
       {/* 總計 */}
-      <div className="flex justify-between items-center mb-2">
+      <div className="flex justify-between items-center mb-4">
         <span className="font-bold text-lg text-gray-900 dark:text-gray-100">總計</span>
         <span className="font-bold text-lg text-pink-600 dark:text-pink-400">NT${total}</span>
       </div>
+
+      {/* 結帳按鈕 */}
+      {order.length > 0 && onCheckout && (
+        <button
+          onClick={onCheckout}
+          className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-bold py-3 px-6 rounded-lg shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 flex items-center justify-center gap-2"
+        >
+          <span className="text-xl">🛒</span>
+          結帳
+        </button>
+      )}
       
       {/* 自定義動畫樣式 */}
       <style jsx>{`
