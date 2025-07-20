@@ -1,6 +1,9 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // 基本配置
-};
+  buildId: `build-${Date.now()}`,
+  experimental: {
+    appDir: true,
+  },
+}
 
-module.exports = nextConfig; 
+module.exports = nextConfig 
