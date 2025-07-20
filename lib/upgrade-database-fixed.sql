@@ -1,190 +1,189 @@
--- 修正的資料庫升級腳本
--- 處理 UUID 和 INTEGER 類型不匹配的問題
+-- 中信小屋資料庫安全升級腳本
+-- 此腳本會檢查現有結構，只更新需要的部分，保留現有資料
 
--- 1. 建立 order_channels 資料表（如果不存在）
-CREATE TABLE IF NOT EXISTS order_channels (
-    id SERIAL PRIMARY KEY,
-    channel_code VARCHAR(10) UNIQUE NOT NULL,
-    channel_name VARCHAR(50) NOT NULL,
-    is_active BOOLEAN DEFAULT true,
-    created_at TIMESTAMP DEFAULT NOW()
-);
-
--- 2. 檢查並插入通道資料（如果不存在）
-INSERT INTO order_channels (channel_code, channel_name) 
-VALUES ('ON', '線上點餐')
-ON CONFLICT (channel_code) DO NOTHING;
-
-INSERT INTO order_channels (channel_code, channel_name) 
-VALUES ('WA', '現場點餐')
-ON CONFLICT (channel_code) DO NOTHING;
-
--- 3. 檢查 orders 資料表的主鍵類型
+-- 1. 檢查並備份現有資料
 DO $$
-DECLARE
-    pk_type text;
 BEGIN
-    -- 檢查 orders 資料表的主鍵類型
-    SELECT data_type INTO pk_type
-    FROM information_schema.columns 
-    WHERE table_name = 'orders' 
-    AND column_name = 'id' 
-    AND table_schema = 'public';
+    -- 如果 orders 表存在，建立備份
+    IF EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'orders') THEN
+        CREATE TABLE IF NOT EXISTS orders_backup AS SELECT * FROM orders;
+        RAISE NOTICE 'Orders table backed up to orders_backup';
+    END IF;
     
-    -- 如果 orders 資料表不存在，建立新的（使用 UUID）
-    IF pk_type IS NULL THEN
+    -- 如果 order_items 表存在，建立備份
+    IF EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'order_items') THEN
+        CREATE TABLE IF NOT EXISTS order_items_backup AS SELECT * FROM order_items;
+        RAISE NOTICE 'Order_items table backed up to order_items_backup';
+    END IF;
+END $$;
+
+-- 2. 更新 orders 表結構
+DO $$
+BEGIN
+    -- 如果 orders 表不存在，建立新表
+    IF NOT EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'orders') THEN
         CREATE TABLE orders (
-            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-            order_number VARCHAR(20) UNIQUE,
-            channel_id INTEGER REFERENCES order_channels(id),
-            customer_name VARCHAR(100),
-            customer_phone VARCHAR(20),
-            total_amount DECIMAL(10,2),
+            id SERIAL PRIMARY KEY,
+            order_number VARCHAR(50) UNIQUE NOT NULL,
+            customer_name VARCHAR(100) NOT NULL,
+            customer_phone VARCHAR(20) NOT NULL,
+            customer_address TEXT,
+            note TEXT,
+            total_amount DECIMAL(10,2) NOT NULL,
             status VARCHAR(20) DEFAULT 'pending',
-            payment_method VARCHAR(20) DEFAULT 'cash',
-            delivery_type VARCHAR(20) DEFAULT 'dine_in',
-            special_notes TEXT,
-            created_at TIMESTAMP DEFAULT NOW(),
-            updated_at TIMESTAMP DEFAULT NOW()
+            created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+            updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
         );
+        RAISE NOTICE 'Created new orders table';
+    ELSE
+        -- 如果表存在，檢查並添加缺少的欄位
+        -- 檢查 order_number 欄位
+        IF NOT EXISTS (SELECT FROM information_schema.columns WHERE table_name = 'orders' AND column_name = 'order_number') THEN
+            ALTER TABLE orders ADD COLUMN order_number VARCHAR(50);
+            RAISE NOTICE 'Added order_number column to orders table';
+        END IF;
+        
+        -- 檢查 customer_name 欄位
+        IF NOT EXISTS (SELECT FROM information_schema.columns WHERE table_name = 'orders' AND column_name = 'customer_name') THEN
+            ALTER TABLE orders ADD COLUMN customer_name VARCHAR(100);
+            RAISE NOTICE 'Added customer_name column to orders table';
+        END IF;
+        
+        -- 檢查 customer_phone 欄位
+        IF NOT EXISTS (SELECT FROM information_schema.columns WHERE table_name = 'orders' AND column_name = 'customer_phone') THEN
+            ALTER TABLE orders ADD COLUMN customer_phone VARCHAR(20);
+            RAISE NOTICE 'Added customer_phone column to orders table';
+        END IF;
+        
+        -- 檢查 customer_address 欄位
+        IF NOT EXISTS (SELECT FROM information_schema.columns WHERE table_name = 'orders' AND column_name = 'customer_address') THEN
+            ALTER TABLE orders ADD COLUMN customer_address TEXT;
+            RAISE NOTICE 'Added customer_address column to orders table';
+        END IF;
+        
+        -- 檢查 note 欄位
+        IF NOT EXISTS (SELECT FROM information_schema.columns WHERE table_name = 'orders' AND column_name = 'note') THEN
+            ALTER TABLE orders ADD COLUMN note TEXT;
+            RAISE NOTICE 'Added note column to orders table';
+        END IF;
+        
+        -- 檢查 total_amount 欄位
+        IF NOT EXISTS (SELECT FROM information_schema.columns WHERE table_name = 'orders' AND column_name = 'total_amount') THEN
+            ALTER TABLE orders ADD COLUMN total_amount DECIMAL(10,2);
+            RAISE NOTICE 'Added total_amount column to orders table';
+        END IF;
+        
+        -- 檢查 status 欄位
+        IF NOT EXISTS (SELECT FROM information_schema.columns WHERE table_name = 'orders' AND column_name = 'status') THEN
+            ALTER TABLE orders ADD COLUMN status VARCHAR(20) DEFAULT 'pending';
+            RAISE NOTICE 'Added status column to orders table';
+        END IF;
+        
+        -- 檢查 updated_at 欄位
+        IF NOT EXISTS (SELECT FROM information_schema.columns WHERE table_name = 'orders' AND column_name = 'updated_at') THEN
+            ALTER TABLE orders ADD COLUMN updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW();
+            RAISE NOTICE 'Added updated_at column to orders table';
+        END IF;
+        
+        RAISE NOTICE 'Updated existing orders table structure';
     END IF;
 END $$;
 
--- 4. 為現有的 orders 資料表添加缺少的欄位（如果不存在）
+-- 3. 更新 order_items 表結構
 DO $$
 BEGIN
-    -- 檢查並添加 order_number 欄位
-    IF NOT EXISTS (SELECT FROM information_schema.columns WHERE table_name = 'orders' AND column_name = 'order_number') THEN
-        ALTER TABLE orders ADD COLUMN order_number VARCHAR(20);
-    END IF;
-    
-    -- 檢查並添加 channel_id 欄位
-    IF NOT EXISTS (SELECT FROM information_schema.columns WHERE table_name = 'orders' AND column_name = 'channel_id') THEN
-        ALTER TABLE orders ADD COLUMN channel_id INTEGER REFERENCES order_channels(id);
-    END IF;
-    
-    -- 檢查並添加 customer_name 欄位
-    IF NOT EXISTS (SELECT FROM information_schema.columns WHERE table_name = 'orders' AND column_name = 'customer_name') THEN
-        ALTER TABLE orders ADD COLUMN customer_name VARCHAR(100);
-    END IF;
-    
-    -- 檢查並添加 customer_phone 欄位
-    IF NOT EXISTS (SELECT FROM information_schema.columns WHERE table_name = 'orders' AND column_name = 'customer_phone') THEN
-        ALTER TABLE orders ADD COLUMN customer_phone VARCHAR(20);
-    END IF;
-    
-    -- 檢查並添加 total_amount 欄位
-    IF NOT EXISTS (SELECT FROM information_schema.columns WHERE table_name = 'orders' AND column_name = 'total_amount') THEN
-        ALTER TABLE orders ADD COLUMN total_amount DECIMAL(10,2);
-    END IF;
-    
-    -- 檢查並添加 payment_method 欄位
-    IF NOT EXISTS (SELECT FROM information_schema.columns WHERE table_name = 'orders' AND column_name = 'payment_method') THEN
-        ALTER TABLE orders ADD COLUMN payment_method VARCHAR(20) DEFAULT 'cash';
-    END IF;
-    
-    -- 檢查並添加 delivery_type 欄位
-    IF NOT EXISTS (SELECT FROM information_schema.columns WHERE table_name = 'orders' AND column_name = 'delivery_type') THEN
-        ALTER TABLE orders ADD COLUMN delivery_type VARCHAR(20) DEFAULT 'dine_in';
-    END IF;
-    
-    -- 檢查並添加 special_notes 欄位
-    IF NOT EXISTS (SELECT FROM information_schema.columns WHERE table_name = 'orders' AND column_name = 'special_notes') THEN
-        ALTER TABLE orders ADD COLUMN special_notes TEXT;
-    END IF;
-    
-    -- 檢查並添加 updated_at 欄位
-    IF NOT EXISTS (SELECT FROM information_schema.columns WHERE table_name = 'orders' AND column_name = 'updated_at') THEN
-        ALTER TABLE orders ADD COLUMN updated_at TIMESTAMP DEFAULT NOW();
+    -- 如果 order_items 表不存在，建立新表
+    IF NOT EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'order_items') THEN
+        CREATE TABLE order_items (
+            id SERIAL PRIMARY KEY,
+            order_id INTEGER REFERENCES orders(id) ON DELETE CASCADE,
+            menu_item_name VARCHAR(100) NOT NULL,
+            quantity INTEGER NOT NULL,
+            price DECIMAL(10,2) NOT NULL,
+            subtotal DECIMAL(10,2) NOT NULL,
+            created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+        );
+        RAISE NOTICE 'Created new order_items table';
+    ELSE
+        -- 如果表存在，檢查並添加缺少的欄位
+        -- 檢查 menu_item_name 欄位
+        IF NOT EXISTS (SELECT FROM information_schema.columns WHERE table_name = 'order_items' AND column_name = 'menu_item_name') THEN
+            -- 如果存在 item_name，重命名為 menu_item_name
+            IF EXISTS (SELECT FROM information_schema.columns WHERE table_name = 'order_items' AND column_name = 'item_name') THEN
+                ALTER TABLE order_items RENAME COLUMN item_name TO menu_item_name;
+                RAISE NOTICE 'Renamed item_name to menu_item_name in order_items table';
+            ELSE
+                ALTER TABLE order_items ADD COLUMN menu_item_name VARCHAR(100);
+                RAISE NOTICE 'Added menu_item_name column to order_items table';
+            END IF;
+        END IF;
+        
+        -- 檢查 price 欄位
+        IF NOT EXISTS (SELECT FROM information_schema.columns WHERE table_name = 'order_items' AND column_name = 'price') THEN
+            -- 如果存在 item_price，重命名為 price
+            IF EXISTS (SELECT FROM information_schema.columns WHERE table_name = 'order_items' AND column_name = 'item_price') THEN
+                ALTER TABLE order_items RENAME COLUMN item_price TO price;
+                RAISE NOTICE 'Renamed item_price to price in order_items table';
+            ELSE
+                ALTER TABLE order_items ADD COLUMN price DECIMAL(10,2);
+                RAISE NOTICE 'Added price column to order_items table';
+            END IF;
+        END IF;
+        
+        -- 檢查 subtotal 欄位
+        IF NOT EXISTS (SELECT FROM information_schema.columns WHERE table_name = 'order_items' AND column_name = 'subtotal') THEN
+            ALTER TABLE order_items ADD COLUMN subtotal DECIMAL(10,2);
+            RAISE NOTICE 'Added subtotal column to order_items table';
+        END IF;
+        
+        RAISE NOTICE 'Updated existing order_items table structure';
     END IF;
 END $$;
 
--- 5. 建立 order_items 資料表（如果不存在）- 使用 UUID 外鍵
-CREATE TABLE IF NOT EXISTS order_items (
-    id SERIAL PRIMARY KEY,
-    order_id UUID REFERENCES orders(id) ON DELETE CASCADE,
-    item_name VARCHAR(100) NOT NULL,
-    item_price DECIMAL(10,2) NOT NULL,
-    quantity INTEGER NOT NULL,
-    special_notes TEXT,
-    created_at TIMESTAMP DEFAULT NOW()
-);
+-- 4. 建立或更新索引
+CREATE INDEX IF NOT EXISTS idx_orders_order_number ON orders(order_number);
+CREATE INDEX IF NOT EXISTS idx_orders_status ON orders(status);
+CREATE INDEX IF NOT EXISTS idx_orders_created_at ON orders(created_at);
+CREATE INDEX IF NOT EXISTS idx_order_items_order_id ON order_items(order_id);
 
--- 6. 建立 queue_numbers 資料表（如果不存在）- 使用 UUID 外鍵
-CREATE TABLE IF NOT EXISTS queue_numbers (
-    id SERIAL PRIMARY KEY,
-    order_id UUID REFERENCES orders(id),
-    queue_number VARCHAR(10) NOT NULL,
-    status VARCHAR(20) DEFAULT 'waiting',
-    called_at TIMESTAMP,
-    completed_at TIMESTAMP,
-    created_at TIMESTAMP DEFAULT NOW()
-);
-
--- 7. 建立 daily_counters 資料表（如果不存在）
-CREATE TABLE IF NOT EXISTS daily_counters (
-    id SERIAL PRIMARY KEY,
-    date DATE UNIQUE NOT NULL,
-    channel_code VARCHAR(10) NOT NULL,
-    counter INTEGER DEFAULT 0,
-    created_at TIMESTAMP DEFAULT NOW(),
-    updated_at TIMESTAMP DEFAULT NOW()
-);
-
--- 8. 建立索引（如果不存在）
-DO $$
+-- 5. 建立或更新觸發器
+CREATE OR REPLACE FUNCTION update_updated_at_column()
+RETURNS TRIGGER AS $$
 BEGIN
-    -- orders 索引
-    IF NOT EXISTS (SELECT FROM pg_indexes WHERE indexname = 'idx_orders_order_number') THEN
-        CREATE INDEX idx_orders_order_number ON orders(order_number);
-    END IF;
-    
-    IF NOT EXISTS (SELECT FROM pg_indexes WHERE indexname = 'idx_orders_channel_id') THEN
-        CREATE INDEX idx_orders_channel_id ON orders(channel_id);
-    END IF;
-    
-    IF NOT EXISTS (SELECT FROM pg_indexes WHERE indexname = 'idx_orders_status') THEN
-        CREATE INDEX idx_orders_status ON orders(status);
-    END IF;
-    
-    IF NOT EXISTS (SELECT FROM pg_indexes WHERE indexname = 'idx_orders_created_at') THEN
-        CREATE INDEX idx_orders_created_at ON orders(created_at);
-    END IF;
-    
-    -- queue_numbers 索引
-    IF NOT EXISTS (SELECT FROM pg_indexes WHERE indexname = 'idx_queue_numbers_status') THEN
-        CREATE INDEX idx_queue_numbers_status ON queue_numbers(status);
-    END IF;
-    
-    -- daily_counters 索引
-    IF NOT EXISTS (SELECT FROM pg_indexes WHERE indexname = 'idx_daily_counters_date_channel') THEN
-        CREATE INDEX idx_daily_counters_date_channel ON daily_counters(date, channel_code);
-    END IF;
-END $$;
+    NEW.updated_at = NOW();
+    RETURN NEW;
+END;
+$$ language 'plpgsql';
 
--- 9. 設定 RLS (Row Level Security) 政策
--- 啟用 RLS
+DROP TRIGGER IF EXISTS update_orders_updated_at ON orders;
+CREATE TRIGGER update_orders_updated_at 
+    BEFORE UPDATE ON orders 
+    FOR EACH ROW 
+    EXECUTE FUNCTION update_updated_at_column();
+
+-- 6. 啟用 RLS
 ALTER TABLE orders ENABLE ROW LEVEL SECURITY;
 ALTER TABLE order_items ENABLE ROW LEVEL SECURITY;
-ALTER TABLE queue_numbers ENABLE ROW LEVEL SECURITY;
-ALTER TABLE daily_counters ENABLE ROW LEVEL SECURITY;
 
--- 建立允許所有操作的政策（用於管理後台）
-DROP POLICY IF EXISTS "Allow all operations for admin" ON orders;
-CREATE POLICY "Allow all operations for admin" ON orders
-    FOR ALL USING (true) WITH CHECK (true);
+-- 7. 建立或更新 RLS 政策
+-- 刪除舊的政策（如果存在）
+DROP POLICY IF EXISTS "Allow anonymous insert" ON orders;
+DROP POLICY IF EXISTS "Allow anonymous insert" ON order_items;
+DROP POLICY IF EXISTS "Service role full access" ON orders;
+DROP POLICY IF EXISTS "Service role full access" ON order_items;
 
-DROP POLICY IF EXISTS "Allow all operations for admin" ON order_items;
-CREATE POLICY "Allow all operations for admin" ON order_items
-    FOR ALL USING (true) WITH CHECK (true);
+-- 建立新的政策
+CREATE POLICY "Allow anonymous insert" ON orders
+  FOR INSERT WITH CHECK (true);
 
-DROP POLICY IF EXISTS "Allow all operations for admin" ON queue_numbers;
-CREATE POLICY "Allow all operations for admin" ON queue_numbers
-    FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Allow anonymous insert" ON order_items
+  FOR INSERT WITH CHECK (true);
 
-DROP POLICY IF EXISTS "Allow all operations for admin" ON daily_counters;
-CREATE POLICY "Allow all operations for admin" ON daily_counters
-    FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Service role full access" ON orders
+  FOR ALL USING (auth.role() = 'service_role');
 
--- 10. 顯示升級結果
-SELECT 'Database upgrade completed successfully!' as result; 
+CREATE POLICY "Service role full access" ON order_items
+  FOR ALL USING (auth.role() = 'service_role');
+
+-- 8. 顯示升級完成訊息
+SELECT 'Database upgrade completed successfully!' as message; 
