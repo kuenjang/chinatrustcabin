@@ -1,14 +1,20 @@
 import React, { useState } from 'react';
 
-interface MenuCardProps {
+interface MenuItem {
+  id: number;
   name: string;
-  description: string;
   price: number;
-  onAdd: () => void;
+  category: string;
+  description?: string;
+}
+
+interface MenuCardProps {
+  item: MenuItem;
+  onSelect: (item: MenuItem) => void;
   quantity?: number;
 }
 
-const MenuCard: React.FC<MenuCardProps> = ({ name, description, price, onAdd, quantity = 0 }) => {
+const MenuCard: React.FC<MenuCardProps> = ({ item, onSelect, quantity = 0 }) => {
   const [isHovered, setIsHovered] = useState(false);
 
   return (
@@ -23,30 +29,35 @@ const MenuCard: React.FC<MenuCardProps> = ({ name, description, price, onAdd, qu
       `}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      onClick={onAdd}
+      onClick={() => onSelect(item)}
     >
-      {/* 數量指示器 - 已移除 */}
+      {/* 數量指示器 */}
+      {quantity > 0 && (
+        <div className="absolute -top-2 -right-2 bg-orange-500 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center">
+          {quantity}
+        </div>
+      )}
 
       {/* 內容區域 */}
       <div className="p-4">
         <div className="flex items-start justify-between gap-3">
           <div className="flex-1 min-w-0">
             <h3 className="font-semibold text-gray-900 dark:text-gray-100 text-lg mb-1 truncate">
-              {name}
+              {item.name}
             </h3>
-            {description && (
+            {item.description && (
               <p className="text-gray-600 dark:text-gray-400 text-sm leading-relaxed">
-                {description}
+                {item.description}
               </p>
             )}
           </div>
           
           <div className="flex flex-col items-end gap-2">
             <span className="text-orange-600 dark:text-orange-400 font-bold text-lg">
-              NT${price}
+              NT${item.price}
             </span>
             
-            {/* 加入按鈕 */}
+            {/* 選擇按鈕 */}
             <button 
               className={`
                 px-4 py-2 rounded-lg font-medium text-sm transition-all duration-200
@@ -57,10 +68,10 @@ const MenuCard: React.FC<MenuCardProps> = ({ name, description, price, onAdd, qu
               `}
               onClick={(e) => {
                 e.stopPropagation();
-                onAdd();
+                onSelect(item);
               }}
             >
-              {quantity > 0 ? `已選 ${quantity}` : '加入'}
+              {quantity > 0 ? `已選 ${quantity}` : '選擇'}
             </button>
           </div>
         </div>

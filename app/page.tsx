@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import MenuCard from '../components/MenuCard';
 import OrderSidebar from '../components/OrderSidebar';
+import ItemSelectionModal from '../components/ItemSelectionModal';
 
 interface MenuItem {
   id: number;
@@ -10,6 +11,16 @@ interface MenuItem {
   price: number;
   category: string;
   description?: string;
+}
+
+interface CartItem {
+  id: number;
+  name: string;
+  price: number;
+  quantity: number;
+  size: string;
+  specialRequest: string;
+  category: string;
 }
 
 const menuItems: MenuItem[] = [
@@ -77,9 +88,8 @@ const menuItems: MenuItem[] = [
 ];
 
 export default function HomePage() {
-  const [cart, setCart] = useState<{ [key: number]: number }>({});
+  const [cart, setCart] = useState<CartItem[]>([]);
   const [isDarkMode, setIsDarkMode] = useState(false);
-  // 移除結帳模態視窗相關狀態
   const [showOrderModal, setShowOrderModal] = useState(false);
   const [orderNumber, setOrderNumber] = useState('');
   const [pickupNumber, setPickupNumber] = useState('');
@@ -91,7 +101,10 @@ export default function HomePage() {
   const [showAdminModal, setShowAdminModal] = useState(false);
   const [adminPassword, setAdminPassword] = useState('');
   const [adminError, setAdminError] = useState('');
-  const [itemNotes, setItemNotes] = useState<{ [key: string]: string }>({});
+  
+  // 選擇視窗狀態
+  const [selectedItem, setSelectedItem] = useState<MenuItem | null>(null);
+  const [showSelectionModal, setShowSelectionModal] = useState(false);
 
   useEffect(() => {
     // 檢查系統深色模式偏好
@@ -109,53 +122,81 @@ export default function HomePage() {
     }
   }, [isDarkMode]);
 
-  const addToCart = (itemId: number) => {
-    setCart(prev => ({
-      ...prev,
-      [itemId]: (prev[itemId] || 0) + 1
-    }));
+  // 處理餐品選擇
+  const handleItemSelect = (item: MenuItem) => {
+    setSelectedItem(item);
+    setShowSelectionModal(true);
   };
 
-  const removeFromCart = (itemId: number) => {
-    setCart(prev => {
-      const newCart = { ...prev };
-      if (newCart[itemId] > 1) {
-        newCart[itemId] -= 1;
-      } else {
-        delete newCart[itemId];
-      }
-      return newCart;
-    });
+  // 處理加入購物車
+  const handleAddToCart = (item: MenuItem, quantity: number, size: string, specialRequest: string) => {
+    // 計算實際價格（包含大小加價）
+    let actualPrice = item.price;
+    if (size === '大杯') actualPrice += 5;
+    if (size === '大份') actualPrice += 10;
+
+    // 創建購物車項目
+    const cartItem: CartItem = {
+      id: item.id,
+      name: item.name,
+      price: actualPrice,
+      quantity,
+      size,
+      specialRequest,
+      category: item.category
+    };
+
+    setCart(prev => [...prev, cartItem]);
   };
 
-  const getCartItems = () => {
-    return Object.entries(cart).map(([itemId, quantity]) => {
-      const item = menuItems.find(item => item.id === parseInt(itemId));
-      return { ...item!, quantity };
-    });
+  // 從購物車移除項目
+  const removeFromCart = (index: number) => {
+    setCart(prev => prev.filter((_, i) => i !== index));
   };
 
+  // 更新購物車項目數量
+  const updateCartItemQuantity = (index: number, quantity: number) => {
+    if (quantity <= 0) {
+      removeFromCart(index);
+    } else {
+      setCart(prev => prev.map((item, i) => 
+        i === index ? { ...item, quantity } : item
+      ));
+    }
+  };
+
+  // 獲取購物車總價
   const getTotalPrice = () => {
-    return getCartItems().reduce((total, item) => total + (item.price * item.quantity), 0);
+    return cart.reduce((total, item) => total + (item.price * item.quantity), 0);
+  };
+
+  // 獲取每個餐品的總數量（用於顯示在卡片上）
+  const getItemTotalQuantity = (itemId: number) => {
+    return cart
+      .filter(item => item.id === itemId)
+      .reduce((total, item) => total + item.quantity, 0);
   };
 
   const handleCheckout = async () => {
-    if (getCartItems().length === 0) return;
+    if (cart.length === 0) return;
     
     setIsSubmitting(true);
     try {
+      // 將購物車項目轉換為訂單格式
+      const orderItems = cart.map(item => ({
+        name: `${item.name}${item.size ? ` (${item.size})` : ''}`,
+        quantity: item.quantity,
+        price: item.price,
+        note: item.specialRequest || ''
+      }));
+
       const orderData = {
         customer_name: '現場取餐',
         customer_phone: '現場取餐',
         customer_address: '現場取餐',
-        note: Object.values(itemNotes).filter(note => note.trim()).join('; '),
+        note: cart.map(item => item.specialRequest).filter(note => note.trim()).join('; '),
         total_amount: getTotalPrice(),
-        items: getCartItems().map(item => ({
-          name: item.name,
-          quantity: item.quantity,
-          price: item.price,
-          note: itemNotes[item.name] || ''
-        }))
+        items: orderItems
       };
 
       const response = await fetch('/api/orders', {
@@ -169,16 +210,13 @@ export default function HomePage() {
       if (response.ok) {
         const result = await response.json();
         setOrderNumber(result.order_number);
-        // 生成取餐號碼（現在訂單號碼就是四碼）
-        const orderNum = result.order_number;
-        setPickupNumber(orderNum);
+        setPickupNumber(result.order_number);
         setOrderDetails({
           pickupMethod: '內用',
           totalAmount: getTotalPrice()
         });
         setShowOrderModal(true);
-        setCart({});
-        setItemNotes({});
+        setCart([]); // 清空購物車
       } else {
         const errorData = await response.json().catch(() => ({}));
         console.error('API 錯誤詳情:', {
@@ -198,42 +236,41 @@ export default function HomePage() {
 
   // 轉換為 OrderSidebar 需要的格式
   const getOrderItems = () => {
-    return getCartItems().map(item => ({
-      name: item.name,
+    return cart.map(item => ({
+      name: `${item.name}${item.size ? ` (${item.size})` : ''}`,
       price: item.price,
       qty: item.quantity,
-      note: itemNotes[item.name] || ''
+      note: item.specialRequest || ''
     }));
   };
 
   const handleChangeQty = (name: string, qty: number) => {
-    const item = menuItems.find(item => item.name === name);
-    if (item) {
-      if (qty <= 0) {
-        removeFromCart(item.id);
-      } else {
-        setCart(prev => ({
-          ...prev,
-          [item.id]: qty
-        }));
-      }
+    const index = cart.findIndex(item => 
+      `${item.name}${item.size ? ` (${item.size})` : ''}` === name
+    );
+    if (index !== -1) {
+      updateCartItemQuantity(index, qty);
     }
   };
 
   const handleRemove = (name: string) => {
-    const item = menuItems.find(item => item.name === name);
-    if (item) {
-      removeFromCart(item.id);
+    const index = cart.findIndex(item => 
+      `${item.name}${item.size ? ` (${item.size})` : ''}` === name
+    );
+    if (index !== -1) {
+      removeFromCart(index);
     }
   };
 
-  // 備註狀態已在上面定義
-
   const handleChangeNote = (name: string, note: string) => {
-    setItemNotes(prev => ({
-      ...prev,
-      [name]: note
-    }));
+    const index = cart.findIndex(item => 
+      `${item.name}${item.size ? ` (${item.size})` : ''}` === name
+    );
+    if (index !== -1) {
+      setCart(prev => prev.map((item, i) => 
+        i === index ? { ...item, specialRequest: note } : item
+      ));
+    }
   };
 
   const handleAdminLogin = () => {
@@ -316,11 +353,9 @@ export default function HomePage() {
                       .map(item => (
                         <MenuCard
                           key={item.id}
-                          name={item.name}
-                          description={item.description || ''}
-                          price={item.price}
-                          onAdd={() => addToCart(item.id)}
-                          quantity={cart[item.id] || 0}
+                          item={item}
+                          onSelect={handleItemSelect}
+                          quantity={getItemTotalQuantity(item.id)}
                         />
                       ))}
                   </div>
@@ -342,9 +377,18 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* 移除結帳模態視窗 */}
+      {/* 餐品選擇視窗 */}
+      <ItemSelectionModal
+        item={selectedItem}
+        isOpen={showSelectionModal}
+        onClose={() => {
+          setShowSelectionModal(false);
+          setSelectedItem(null);
+        }}
+        onAddToCart={handleAddToCart}
+      />
 
-            {/* Order Confirmation Modal */}
+      {/* Order Confirmation Modal */}
       {showOrderModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="max-w-md w-full bg-white rounded-lg shadow-xl overflow-hidden">
@@ -367,24 +411,24 @@ export default function HomePage() {
               </div>
             </div>
 
-                          {/* Order Number Section */}
-              <div className="p-6">
-                <div className="bg-gray-50 rounded-lg p-4 mb-4">
-                  <p className="text-sm text-gray-600 mb-2">訂單號碼</p>
-                  <p className="text-lg font-semibold text-gray-900">{orderNumber}</p>
-                </div>
+            {/* Order Number Section */}
+            <div className="p-6">
+              <div className="bg-gray-50 rounded-lg p-4 mb-4">
+                <p className="text-sm text-gray-600 mb-2">訂單號碼</p>
+                <p className="text-lg font-semibold text-gray-900">{orderNumber}</p>
+              </div>
 
-                {/* Pickup Number Section */}
-                <div className="bg-blue-50 rounded-lg p-4 mb-4 text-center">
-                  <div className="flex items-center justify-center mb-2">
-                    <svg className="w-4 h-4 text-blue-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
-                    <p className="text-sm text-blue-600">請記住您的訂單號</p>
-                  </div>
-                  <div className="text-3xl font-bold text-blue-900 mb-2">{pickupNumber}</div>
-                  <p className="text-xs text-blue-700">取餐時請報此號碼</p>
+              {/* Pickup Number Section */}
+              <div className="bg-blue-50 rounded-lg p-4 mb-4 text-center">
+                <div className="flex items-center justify-center mb-2">
+                  <svg className="w-4 h-4 text-blue-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  <p className="text-sm text-blue-600">請記住您的訂單號</p>
                 </div>
+                <div className="text-3xl font-bold text-blue-900 mb-2">{pickupNumber}</div>
+                <p className="text-xs text-blue-700">取餐時請報此號碼</p>
+              </div>
 
               {/* Order Details */}
               <div className="grid grid-cols-2 gap-3 mb-4">
@@ -398,34 +442,10 @@ export default function HomePage() {
                 </div>
               </div>
 
-              {/* Pickup Reminders */}
-              <div className="bg-yellow-50 rounded-lg p-4 mb-6">
-                <div className="flex items-center mb-3">
-                  <svg className="w-4 h-4 text-yellow-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                  </svg>
-                  <p className="text-sm font-semibold text-yellow-800">取餐提醒:</p>
-                </div>
-                <ul className="space-y-1">
-                  <li className="text-xs text-red-600 flex items-start">
-                    <span className="mr-2">•</span>
-                    請記住您的訂單號: {pickupNumber}
-                  </li>
-                  <li className="text-xs text-red-600 flex items-start">
-                    <span className="mr-2">•</span>
-                    取餐時請主動報出訂單號
-                  </li>
-                  <li className="text-xs text-red-600 flex items-start">
-                    <span className="mr-2">•</span>
-                    我們會盡快為您準備餐點
-                  </li>
-                </ul>
-              </div>
-
-              {/* Confirm Button */}
+              {/* Close Button */}
               <button
                 onClick={() => setShowOrderModal(false)}
-                className="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white py-3 rounded-lg font-semibold hover:from-blue-600 hover:to-purple-700 transition-all duration-200 shadow-lg"
+                className="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3 px-6 rounded-lg transition-colors duration-200"
               >
                 確定
               </button>
@@ -434,72 +454,41 @@ export default function HomePage() {
         </div>
       )}
 
-      {/* Admin Password Modal */}
+      {/* Admin Modal */}
       {showAdminModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className={`max-w-md w-full rounded-lg shadow-xl transition-colors duration-300 ${
-            isDarkMode ? 'bg-gray-800' : 'bg-white'
-          }`}>
+          <div className="max-w-md w-full bg-white dark:bg-gray-800 rounded-lg shadow-xl overflow-hidden">
             <div className="p-6">
-              <h3 className={`text-xl font-bold mb-4 ${
-                isDarkMode ? 'text-white' : 'text-gray-900'
-              }`}>
-                🔐 後台管理登入
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+                管理員登入
               </h3>
-              
-              <div className="space-y-4">
-                <div>
-                  <label className={`block text-sm font-medium mb-1 ${
-                    isDarkMode ? 'text-gray-300' : 'text-gray-700'
-                  }`}>
-                    管理密碼
-                  </label>
-                  <input
-                    type="password"
-                    value={adminPassword}
-                    onChange={(e) => {
-                      setAdminPassword(e.target.value);
-                      setAdminError('');
-                    }}
-                    onKeyPress={(e) => {
-                      if (e.key === 'Enter') {
-                        handleAdminLogin();
-                      }
-                    }}
-                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent ${
-                      isDarkMode 
-                        ? 'bg-gray-700 border-gray-600 text-white' 
-                        : 'bg-white border-gray-300 text-gray-900'
-                    } ${adminError ? 'border-red-500' : ''}`}
-                    placeholder="請輸入管理密碼"
-                    autoFocus
-                  />
-                  {adminError && (
-                    <p className="text-red-500 text-sm mt-1">{adminError}</p>
-                  )}
-                </div>
-              </div>
-
-              <div className="flex space-x-3 mt-6">
+              <input
+                type="password"
+                value={adminPassword}
+                onChange={(e) => setAdminPassword(e.target.value)}
+                placeholder="請輸入管理員密碼"
+                className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                onKeyPress={(e) => e.key === 'Enter' && handleAdminLogin()}
+              />
+              {adminError && (
+                <p className="text-red-500 text-sm mt-2">{adminError}</p>
+              )}
+              <div className="flex space-x-3 mt-4">
+                <button
+                  onClick={handleAdminLogin}
+                  className="flex-1 bg-orange-500 hover:bg-orange-600 text-white font-semibold py-2 px-4 rounded-lg transition-colors duration-200"
+                >
+                  登入
+                </button>
                 <button
                   onClick={() => {
                     setShowAdminModal(false);
                     setAdminPassword('');
                     setAdminError('');
                   }}
-                  className={`flex-1 px-4 py-2 border rounded-lg transition-colors duration-200 ${
-                    isDarkMode 
-                      ? 'border-gray-600 text-gray-300 hover:bg-gray-700' 
-                      : 'border-gray-300 text-gray-700 hover:bg-gray-50'
-                  }`}
+                  className="flex-1 bg-gray-300 dark:bg-gray-600 hover:bg-gray-400 dark:hover:bg-gray-500 text-gray-700 dark:text-gray-300 font-semibold py-2 px-4 rounded-lg transition-colors duration-200"
                 >
                   取消
-                </button>
-                <button
-                  onClick={handleAdminLogin}
-                  className="flex-1 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors duration-200"
-                >
-                  登入
                 </button>
               </div>
             </div>
