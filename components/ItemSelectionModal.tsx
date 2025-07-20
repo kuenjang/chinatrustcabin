@@ -30,6 +30,11 @@ const ItemSelectionModal: React.FC<ItemSelectionModalProps> = ({
     if (!item) return [];
     
     switch (item.category) {
+      case '飲料':
+        return [
+          { value: '中杯', label: '中杯' },
+          { value: '大杯', label: '大杯 (+5元)' }
+        ];
       case '蛋餅':
       case '炒飯麵類':
       case '鐵板麵類':
@@ -41,7 +46,7 @@ const ItemSelectionModal: React.FC<ItemSelectionModalProps> = ({
           { value: '大份', label: '大份 (+10元)' }
         ];
       default:
-        return []; // 飲料、蔥抓餅、厚片等不需要大小選擇
+        return []; // 蔥抓餅、厚片等不需要大小選擇
     }
   };
 
@@ -86,6 +91,14 @@ const ItemSelectionModal: React.FC<ItemSelectionModalProps> = ({
 
   if (!isOpen || !item) return null;
 
+  // 根據餐品類別決定數量標籤
+  const getQuantityLabel = () => {
+    if (item.category === '飲料') {
+      return '杯量';
+    }
+    return '數量';
+  };
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto">
@@ -124,7 +137,7 @@ const ItemSelectionModal: React.FC<ItemSelectionModalProps> = ({
           {/* 數量選擇 */}
           <div className="space-y-3">
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-              數量
+              {getQuantityLabel()}
             </label>
             <div className="flex items-center space-x-4">
               <button
@@ -155,7 +168,7 @@ const ItemSelectionModal: React.FC<ItemSelectionModalProps> = ({
           {hasSizeOptions && (
             <div className="space-y-3">
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                大小選擇
+                {item.category === '飲料' ? '杯量選擇' : '大小選擇'}
               </label>
               <div className="grid grid-cols-2 gap-3">
                 {sizeOptions.map((option) => (
