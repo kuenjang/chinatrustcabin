@@ -1,25 +1,41 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '../../../lib/supabaseClient';
-import { generateOrderNumber } from '../../../lib/orderNumberService';
+import { supabase, supabaseAdmin } from '../../../lib/supabaseClient';
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const { customer_name, customer_phone, customer_address, note, total_amount, items } = body;
 
-    // 生成訂單號碼
-    const order_number = generateOrderNumber();
+    // 生成訂單號碼 - 四碼格式，每天重新計數
+    const today = new Date().toISOString().split('T')[0].replace(/-/g, '');
+    
+    // 取得今日的訂單數量
+    const { data: todayOrders, error: countError } = await supabaseAdmin
+      .from('orders')
+      .select('id')
+      .gte('created_at', `${today.substring(0, 4)}-${today.substring(4, 6)}-${today.substring(6, 8)}`)
+      .lt('created_at', `${today.substring(0, 4)}-${today.substring(4, 6)}-${parseInt(today.substring(6, 8)) + 1}`);
+    
+    if (countError) {
+      console.error('計算今日訂單數量失敗:', countError);
+      return NextResponse.json({ error: '生成訂單號碼失敗' }, { status: 500 });
+    }
+    
+    // 今日訂單數量 + 1，格式化為4位數
+    const todayOrderCount = (todayOrders?.length || 0) + 1;
+    const order_number = todayOrderCount.toString().padStart(4, '0');
 
-    // 插入訂單
-    const { data: order, error: orderError } = await supabase
+    // 使用服務端 Supabase 客戶端插入訂單（繞過 RLS）
+    const { data: order, error: orderError } = await supabaseAdmin
       .from('orders')
       .insert([
         {
           order_number,
+          channel_code: 'ON', // 線上點餐
           customer_name,
           customer_phone,
           customer_address,
-          note,
+          note: note, // 使用實際的欄位名稱
           total_amount,
           status: 'pending'
         }
@@ -35,13 +51,13 @@ export async function POST(request: NextRequest) {
     // 插入訂單項目
     const orderItems = items.map((item: any) => ({
       order_id: order.id,
-      menu_item_name: item.name,
-      quantity: item.quantity,
+      menu_item_name: item.name, // 使用實際的欄位名稱
       price: item.price,
-      subtotal: item.quantity * item.price
+      quantity: item.quantity,
+      subtotal: item.quantity * item.price // 使用實際的欄位名稱
     }));
 
-    const { error: itemsError } = await supabase
+    const { error: itemsError } = await supabaseAdmin
       .from('order_items')
       .insert(orderItems);
 
@@ -69,7 +85,12 @@ ${note ? `📌 備註: ${note}` : ''}
 ⏰ 下單時間: ${new Date().toLocaleString('zh-TW')}
       `;
 
-      await fetch('/api/telegram', {
+      // 修正 URL 格式 - 使用完整的 URL
+      const baseUrl = process.env.NODE_ENV === 'production' 
+        ? 'https://your-domain.com' 
+        : 'http://localhost:3000';
+      
+      await fetch(`${baseUrl}/api/telegram`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -94,7 +115,7 @@ ${note ? `📌 備註: ${note}` : ''}
 
 export async function GET() {
   try {
-    const { data: orders, error } = await supabase
+    const { data: orders, error } = await supabaseAdmin
       .from('orders')
       .select(`
         *,

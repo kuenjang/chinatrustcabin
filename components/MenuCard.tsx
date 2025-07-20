@@ -25,14 +25,7 @@ const MenuCard: React.FC<MenuCardProps> = ({ name, description, price, onAdd, qu
       onMouseLeave={() => setIsHovered(false)}
       onClick={onAdd}
     >
-      {/* 數量指示器 */}
-      {quantity > 0 && (
-        <div className="absolute top-3 right-3">
-          <div className="w-6 h-6 rounded-full bg-orange-500 text-white text-sm font-bold flex items-center justify-center">
-            {quantity}
-          </div>
-        </div>
-      )}
+      {/* 數量指示器 - 已移除 */}
 
       {/* 內容區域 */}
       <div className="p-4">

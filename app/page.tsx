@@ -74,16 +74,19 @@ const menuItems: MenuItem[] = [
 export default function HomePage() {
   const [cart, setCart] = useState<{ [key: number]: number }>({});
   const [isDarkMode, setIsDarkMode] = useState(false);
-  const [showCheckout, setShowCheckout] = useState(false);
-  const [customerInfo, setCustomerInfo] = useState({
-    name: '',
-    phone: '',
-    address: '',
-    note: ''
-  });
+  // 移除結帳模態視窗相關狀態
   const [showOrderModal, setShowOrderModal] = useState(false);
   const [orderNumber, setOrderNumber] = useState('');
+  const [pickupNumber, setPickupNumber] = useState('');
+  const [orderDetails, setOrderDetails] = useState({
+    pickupMethod: '內用',
+    totalAmount: 0
+  });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showAdminModal, setShowAdminModal] = useState(false);
+  const [adminPassword, setAdminPassword] = useState('');
+  const [adminError, setAdminError] = useState('');
+  const [itemNotes, setItemNotes] = useState<{ [key: string]: string }>({});
 
   useEffect(() => {
     // 檢查系統深色模式偏好
@@ -131,29 +134,22 @@ export default function HomePage() {
     return getCartItems().reduce((total, item) => total + (item.price * item.quantity), 0);
   };
 
-  const handleCheckout = () => {
+  const handleCheckout = async () => {
     if (getCartItems().length === 0) return;
-    setShowCheckout(true);
-  };
-
-  const handleSubmitOrder = async () => {
-    if (!customerInfo.name || !customerInfo.phone) {
-      alert('請填寫姓名和電話');
-      return;
-    }
-
+    
     setIsSubmitting(true);
     try {
       const orderData = {
-        customer_name: customerInfo.name,
-        customer_phone: customerInfo.phone,
-        customer_address: customerInfo.address,
-        note: customerInfo.note,
+        customer_name: '現場取餐',
+        customer_phone: '現場取餐',
+        customer_address: '現場取餐',
+        note: Object.values(itemNotes).filter(note => note.trim()).join('; '),
         total_amount: getTotalPrice(),
         items: getCartItems().map(item => ({
           name: item.name,
           quantity: item.quantity,
-          price: item.price
+          price: item.price,
+          note: itemNotes[item.name] || ''
         }))
       };
 
@@ -168,16 +164,28 @@ export default function HomePage() {
       if (response.ok) {
         const result = await response.json();
         setOrderNumber(result.order_number);
+        // 生成取餐號碼（現在訂單號碼就是四碼）
+        const orderNum = result.order_number;
+        setPickupNumber(orderNum);
+        setOrderDetails({
+          pickupMethod: '內用',
+          totalAmount: getTotalPrice()
+        });
         setShowOrderModal(true);
         setCart({});
-        setCustomerInfo({ name: '', phone: '', address: '', note: '' });
-        setShowCheckout(false);
+        setItemNotes({});
       } else {
-        throw new Error('訂單提交失敗');
+        const errorData = await response.json().catch(() => ({}));
+        console.error('API 錯誤詳情:', {
+          status: response.status,
+          statusText: response.statusText,
+          error: errorData
+        });
+        throw new Error(`訂單提交失敗 (${response.status}): ${errorData.error || '未知錯誤'}`);
       }
     } catch (error) {
       console.error('提交訂單時發生錯誤:', error);
-      alert('訂單提交失敗，請稍後再試');
+      alert(`訂單提交失敗：${error instanceof Error ? error.message : '請稍後再試'}`);
     } finally {
       setIsSubmitting(false);
     }
@@ -189,7 +197,7 @@ export default function HomePage() {
       name: item.name,
       price: item.price,
       qty: item.quantity,
-      note: ''
+      note: itemNotes[item.name] || ''
     }));
   };
 
@@ -214,9 +222,24 @@ export default function HomePage() {
     }
   };
 
+  // 備註狀態已在上面定義
+
   const handleChangeNote = (name: string, note: string) => {
-    // 這裡可以實現備註功能
-    console.log(`Note for ${name}: ${note}`);
+    setItemNotes(prev => ({
+      ...prev,
+      [name]: note
+    }));
+  };
+
+  const handleAdminLogin = () => {
+    if (adminPassword === '1234') {
+      setShowAdminModal(false);
+      setAdminPassword('');
+      setAdminError('');
+      window.open('/admin', '_blank');
+    } else {
+      setAdminError('密碼錯誤，請重新輸入');
+    }
   };
 
   const categories = Array.from(new Set(menuItems.map(item => item.category)));
@@ -244,16 +267,28 @@ export default function HomePage() {
               </span>
             </div>
             
-            <button
-              onClick={() => setIsDarkMode(!isDarkMode)}
-              className={`p-2 rounded-lg transition-colors duration-200 ${
-                isDarkMode 
-                  ? 'bg-gray-700 hover:bg-gray-600 text-yellow-400' 
-                  : 'bg-gray-100 hover:bg-gray-200 text-gray-600'
-              }`}
-            >
-              {isDarkMode ? '☀️' : '🌙'}
-            </button>
+            <div className="flex items-center space-x-2">
+              <button
+                onClick={() => setIsDarkMode(!isDarkMode)}
+                className={`p-2 rounded-lg transition-colors duration-200 ${
+                  isDarkMode 
+                    ? 'bg-gray-700 hover:bg-gray-600 text-yellow-400' 
+                    : 'bg-gray-100 hover:bg-gray-200 text-gray-600'
+                }`}
+              >
+                {isDarkMode ? '☀️' : '🌙'}
+              </button>
+              <button
+                onClick={() => setShowAdminModal(true)}
+                className={`px-3 py-2 rounded-lg transition-colors duration-200 ${
+                  isDarkMode 
+                    ? 'bg-gray-700 hover:bg-gray-600 text-gray-300' 
+                    : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+                }`}
+              >
+                📊 管理
+              </button>
+            </div>
           </div>
         </div>
       </header>
@@ -302,8 +337,100 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* Checkout Modal */}
-      {showCheckout && (
+      {/* 移除結帳模態視窗 */}
+
+            {/* Order Confirmation Modal */}
+      {showOrderModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="max-w-md w-full bg-white rounded-lg shadow-xl overflow-hidden">
+            {/* Header */}
+            <div className="p-6 text-center border-b border-gray-100">
+              <div className="flex items-center justify-center mb-4">
+                <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mr-3">
+                  <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+                <div className="flex items-center">
+                  <div className="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center mr-2">
+                    <svg className="w-4 h-4 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-2.5 5M7 13l2.5 5m6-5v6a2 2 0 01-2 2H9a2 2 0 01-2-2v-6m8 0V9a2 2 0 00-2-2H9a2 2 0 00-2 2v4.01" />
+                    </svg>
+                  </div>
+                  <h3 className="text-xl font-bold text-gray-900">訂單建立成功!</h3>
+                </div>
+              </div>
+            </div>
+
+                          {/* Order Number Section */}
+              <div className="p-6">
+                <div className="bg-gray-50 rounded-lg p-4 mb-4">
+                  <p className="text-sm text-gray-600 mb-2">訂單號碼</p>
+                  <p className="text-lg font-semibold text-gray-900">{orderNumber}</p>
+                </div>
+
+                {/* Pickup Number Section */}
+                <div className="bg-blue-50 rounded-lg p-4 mb-4 text-center">
+                  <div className="flex items-center justify-center mb-2">
+                    <svg className="w-4 h-4 text-blue-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    <p className="text-sm text-blue-600">請記住您的訂單號</p>
+                  </div>
+                  <div className="text-3xl font-bold text-blue-900 mb-2">{pickupNumber}</div>
+                  <p className="text-xs text-blue-700">取餐時請報此號碼</p>
+                </div>
+
+              {/* Order Details */}
+              <div className="grid grid-cols-2 gap-3 mb-4">
+                <div className="bg-green-50 rounded-lg p-3">
+                  <p className="text-xs text-green-600 mb-1">取餐方式</p>
+                  <p className="text-sm font-semibold text-gray-900">{orderDetails.pickupMethod}</p>
+                </div>
+                <div className="bg-orange-50 rounded-lg p-3">
+                  <p className="text-xs text-orange-600 mb-1">總金額</p>
+                  <p className="text-sm font-semibold text-gray-900">${orderDetails.totalAmount}</p>
+                </div>
+              </div>
+
+              {/* Pickup Reminders */}
+              <div className="bg-yellow-50 rounded-lg p-4 mb-6">
+                <div className="flex items-center mb-3">
+                  <svg className="w-4 h-4 text-yellow-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                  </svg>
+                  <p className="text-sm font-semibold text-yellow-800">取餐提醒:</p>
+                </div>
+                <ul className="space-y-1">
+                  <li className="text-xs text-red-600 flex items-start">
+                    <span className="mr-2">•</span>
+                    請記住您的訂單號: {pickupNumber}
+                  </li>
+                  <li className="text-xs text-red-600 flex items-start">
+                    <span className="mr-2">•</span>
+                    取餐時請主動報出訂單號
+                  </li>
+                  <li className="text-xs text-red-600 flex items-start">
+                    <span className="mr-2">•</span>
+                    我們會盡快為您準備餐點
+                  </li>
+                </ul>
+              </div>
+
+              {/* Confirm Button */}
+              <button
+                onClick={() => setShowOrderModal(false)}
+                className="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white py-3 rounded-lg font-semibold hover:from-blue-600 hover:to-purple-700 transition-all duration-200 shadow-lg"
+              >
+                確定
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Admin Password Modal */}
+      {showAdminModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className={`max-w-md w-full rounded-lg shadow-xl transition-colors duration-300 ${
             isDarkMode ? 'bg-gray-800' : 'bg-white'
@@ -312,7 +439,7 @@ export default function HomePage() {
               <h3 className={`text-xl font-bold mb-4 ${
                 isDarkMode ? 'text-white' : 'text-gray-900'
               }`}>
-                填寫訂單資訊
+                🔐 後台管理登入
               </h3>
               
               <div className="space-y-4">
@@ -320,153 +447,56 @@ export default function HomePage() {
                   <label className={`block text-sm font-medium mb-1 ${
                     isDarkMode ? 'text-gray-300' : 'text-gray-700'
                   }`}>
-                    姓名 *
+                    管理密碼
                   </label>
                   <input
-                    type="text"
-                    value={customerInfo.name}
-                    onChange={(e) => setCustomerInfo(prev => ({ ...prev, name: e.target.value }))}
+                    type="password"
+                    value={adminPassword}
+                    onChange={(e) => {
+                      setAdminPassword(e.target.value);
+                      setAdminError('');
+                    }}
+                    onKeyPress={(e) => {
+                      if (e.key === 'Enter') {
+                        handleAdminLogin();
+                      }
+                    }}
                     className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent ${
                       isDarkMode 
                         ? 'bg-gray-700 border-gray-600 text-white' 
                         : 'bg-white border-gray-300 text-gray-900'
-                    }`}
-                    placeholder="請輸入您的姓名"
+                    } ${adminError ? 'border-red-500' : ''}`}
+                    placeholder="請輸入管理密碼"
+                    autoFocus
                   />
-                </div>
-
-                <div>
-                  <label className={`block text-sm font-medium mb-1 ${
-                    isDarkMode ? 'text-gray-300' : 'text-gray-700'
-                  }`}>
-                    電話 *
-                  </label>
-                  <input
-                    type="tel"
-                    value={customerInfo.phone}
-                    onChange={(e) => setCustomerInfo(prev => ({ ...prev, phone: e.target.value }))}
-                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent ${
-                      isDarkMode 
-                        ? 'bg-gray-700 border-gray-600 text-white' 
-                        : 'bg-white border-gray-300 text-gray-900'
-                    }`}
-                    placeholder="請輸入您的電話"
-                  />
-                </div>
-
-                <div>
-                  <label className={`block text-sm font-medium mb-1 ${
-                    isDarkMode ? 'text-gray-300' : 'text-gray-700'
-                  }`}>
-                    地址
-                  </label>
-                  <input
-                    type="text"
-                    value={customerInfo.address}
-                    onChange={(e) => setCustomerInfo(prev => ({ ...prev, address: e.target.value }))}
-                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent ${
-                      isDarkMode 
-                        ? 'bg-gray-700 border-gray-600 text-white' 
-                        : 'bg-white border-gray-300 text-gray-900'
-                    }`}
-                    placeholder="請輸入您的地址（選填）"
-                  />
-                </div>
-
-                <div>
-                  <label className={`block text-sm font-medium mb-1 ${
-                    isDarkMode ? 'text-gray-300' : 'text-gray-700'
-                  }`}>
-                    備註
-                  </label>
-                  <textarea
-                    value={customerInfo.note}
-                    onChange={(e) => setCustomerInfo(prev => ({ ...prev, note: e.target.value }))}
-                    rows={3}
-                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent ${
-                      isDarkMode 
-                        ? 'bg-gray-700 border-gray-600 text-white' 
-                        : 'bg-white border-gray-300 text-gray-900'
-                    }`}
-                    placeholder="特殊要求或備註（選填）"
-                  />
-                </div>
-
-                <div className={`p-4 rounded-lg ${
-                  isDarkMode ? 'bg-gray-700' : 'bg-gray-50'
-                }`}>
-                  <div className="flex justify-between items-center mb-2">
-                    <span className={`font-medium ${
-                      isDarkMode ? 'text-gray-300' : 'text-gray-700'
-                    }`}>
-                      總計：
-                    </span>
-                    <span className="text-xl font-bold text-orange-600">
-                      NT$ {getTotalPrice()}
-                    </span>
-                  </div>
+                  {adminError && (
+                    <p className="text-red-500 text-sm mt-1">{adminError}</p>
+                  )}
                 </div>
               </div>
 
               <div className="flex space-x-3 mt-6">
                 <button
-                  onClick={() => setShowCheckout(false)}
-                  disabled={isSubmitting}
+                  onClick={() => {
+                    setShowAdminModal(false);
+                    setAdminPassword('');
+                    setAdminError('');
+                  }}
                   className={`flex-1 px-4 py-2 border rounded-lg transition-colors duration-200 ${
                     isDarkMode 
                       ? 'border-gray-600 text-gray-300 hover:bg-gray-700' 
                       : 'border-gray-300 text-gray-700 hover:bg-gray-50'
-                  } ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  }`}
                 >
                   取消
                 </button>
                 <button
-                  onClick={handleSubmitOrder}
-                  disabled={isSubmitting}
-                  className={`flex-1 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors duration-200 ${
-                    isSubmitting ? 'opacity-50 cursor-not-allowed' : ''
-                  }`}
+                  onClick={handleAdminLogin}
+                  className="flex-1 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors duration-200"
                 >
-                  {isSubmitting ? '提交中...' : '提交訂單'}
+                  登入
                 </button>
               </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-            {/* Order Confirmation Modal */}
-      {showOrderModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className={`max-w-md w-full rounded-lg shadow-xl transition-colors duration-300 ${
-            isDarkMode ? 'bg-gray-800' : 'bg-white'
-          }`}>
-            <div className="p-6 text-center">
-              <div className="text-6xl mb-4">🎉</div>
-              <h3 className={`text-xl font-bold mb-2 ${
-                isDarkMode ? 'text-white' : 'text-gray-900'
-              }`}>
-                訂單提交成功！
-              </h3>
-              <p className={`mb-4 ${
-                isDarkMode ? 'text-gray-300' : 'text-gray-600'
-              }`}>
-                您的訂單號碼是：
-              </p>
-              <div className="text-2xl font-bold text-orange-600 mb-6">
-                {orderNumber}
-              </div>
-              <p className={`text-sm mb-6 ${
-                isDarkMode ? 'text-gray-400' : 'text-gray-500'
-              }`}>
-                我們會透過 Telegram 通知您訂單狀態，請保持電話暢通。
-              </p>
-              <button
-                onClick={() => setShowOrderModal(false)}
-                className="w-full px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors duration-200"
-              >
-                確定
-              </button>
             </div>
           </div>
         </div>
