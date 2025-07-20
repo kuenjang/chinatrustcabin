@@ -5,10 +5,10 @@ interface MenuCardProps {
   description: string;
   price: number;
   onAdd: () => void;
-  isSelected?: boolean;
+  quantity?: number;
 }
 
-const MenuCard: React.FC<MenuCardProps> = ({ name, description, price, onAdd, isSelected = false }) => {
+const MenuCard: React.FC<MenuCardProps> = ({ name, description, price, onAdd, quantity = 0 }) => {
   const [isHovered, setIsHovered] = useState(false);
 
   return (
@@ -16,36 +16,23 @@ const MenuCard: React.FC<MenuCardProps> = ({ name, description, price, onAdd, is
       className={`
         relative bg-white dark:bg-gray-800 rounded-xl shadow-sm border-2 transition-all duration-300 ease-in-out
         hover:shadow-lg hover:scale-[1.02] cursor-pointer
-        ${isSelected 
-          ? 'border-pink-500 bg-pink-50 dark:bg-pink-900/20 shadow-pink-200 dark:shadow-pink-900/30' 
-          : 'border-gray-100 dark:border-gray-700 hover:border-pink-200 dark:hover:border-pink-600'
+        ${quantity > 0 
+          ? 'border-orange-500 bg-orange-50 dark:bg-orange-900/20 shadow-orange-200 dark:shadow-orange-900/30' 
+          : 'border-gray-100 dark:border-gray-700 hover:border-orange-200 dark:hover:border-orange-600'
         }
       `}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       onClick={onAdd}
     >
-      {/* 選擇指示器 */}
-      <div className="absolute top-3 right-3">
-        <div className={`
-          w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-200
-          ${isSelected 
-            ? 'border-pink-500 bg-pink-500' 
-            : 'border-gray-300 dark:border-gray-600'
-          }
-        `}>
-          {isSelected && (
-            <svg 
-              className="w-4 h-4 text-white" 
-              fill="none" 
-              stroke="currentColor" 
-              viewBox="0 0 24 24"
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-            </svg>
-          )}
+      {/* 數量指示器 */}
+      {quantity > 0 && (
+        <div className="absolute top-3 right-3">
+          <div className="w-6 h-6 rounded-full bg-orange-500 text-white text-sm font-bold flex items-center justify-center">
+            {quantity}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* 內容區域 */}
       <div className="p-4">
@@ -62,7 +49,7 @@ const MenuCard: React.FC<MenuCardProps> = ({ name, description, price, onAdd, is
           </div>
           
           <div className="flex flex-col items-end gap-2">
-            <span className="text-pink-600 dark:text-pink-400 font-bold text-lg">
+            <span className="text-orange-600 dark:text-orange-400 font-bold text-lg">
               NT${price}
             </span>
             
@@ -70,9 +57,9 @@ const MenuCard: React.FC<MenuCardProps> = ({ name, description, price, onAdd, is
             <button 
               className={`
                 px-4 py-2 rounded-lg font-medium text-sm transition-all duration-200
-                ${isSelected
-                  ? 'bg-pink-500 text-white shadow-lg shadow-pink-200 dark:shadow-pink-900/30'
-                  : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-pink-500 hover:text-white'
+                ${quantity > 0
+                  ? 'bg-orange-500 text-white shadow-lg shadow-orange-200 dark:shadow-orange-900/30'
+                  : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-orange-500 hover:text-white'
                 }
               `}
               onClick={(e) => {
@@ -80,15 +67,15 @@ const MenuCard: React.FC<MenuCardProps> = ({ name, description, price, onAdd, is
                 onAdd();
               }}
             >
-              {isSelected ? '已選擇' : '加入'}
+              {quantity > 0 ? `已選 ${quantity}` : '加入'}
             </button>
           </div>
         </div>
       </div>
 
       {/* 懸停效果 */}
-      {isHovered && !isSelected && (
-        <div className="absolute inset-0 bg-pink-500/5 rounded-xl pointer-events-none" />
+      {isHovered && quantity === 0 && (
+        <div className="absolute inset-0 bg-orange-500/5 rounded-xl pointer-events-none" />
       )}
     </div>
   );

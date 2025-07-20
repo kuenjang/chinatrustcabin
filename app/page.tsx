@@ -218,7 +218,7 @@ export default function HomePage() {
                           description={item.description || ''}
                           price={item.price}
                           onAdd={() => addToCart(item.id)}
-                          isSelected={(cart[item.id] || 0) > 0}
+                          quantity={cart[item.id] || 0}
                         />
                       ))}
                   </div>
