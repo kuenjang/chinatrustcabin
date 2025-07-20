@@ -1,6 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  buildId: `build-${Date.now()}`,
+  buildId: `build-${Date.now()}-no-checkbox`,
   experimental: {
     appDir: true,
   },
