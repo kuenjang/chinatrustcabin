@@ -85,20 +85,39 @@ ${note ? `📌 備註: ${note}` : ''}
 ⏰ 下單時間: ${new Date().toLocaleString('zh-TW')}
       `;
 
-      // 修正 URL 格式 - 使用完整的 URL
-      const baseUrl = process.env.NODE_ENV === 'production' 
-        ? 'https://your-domain.com' 
-        : 'http://localhost:3000';
-      
-      await fetch(`${baseUrl}/api/telegram`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ message: telegramMessage }),
-      });
+      // 直接調用 Telegram API，不通過內部 API 路由
+      const botToken = process.env.TELEGRAM_BOT_TOKEN;
+      const chatId = process.env.TELEGRAM_CHAT_ID;
+
+      if (botToken && chatId) {
+        const telegramUrl = `https://api.telegram.org/bot${botToken}/sendMessage`;
+        
+        const telegramResponse = await fetch(telegramUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            chat_id: chatId,
+            text: telegramMessage,
+            parse_mode: 'HTML'
+          }),
+        });
+
+        if (telegramResponse.ok) {
+          console.log('✅ Telegram 通知發送成功');
+        } else {
+          const errorData = await telegramResponse.json();
+          console.error('❌ Telegram API 錯誤:', errorData);
+        }
+      } else {
+        console.error('❌ Telegram 設定缺失:', { 
+          hasBotToken: !!botToken, 
+          hasChatId: !!chatId 
+        });
+      }
     } catch (telegramError) {
-      console.error('Telegram 通知發送失敗:', telegramError);
+      console.error('❌ Telegram 通知發送失敗:', telegramError);
     }
 
     return NextResponse.json({ 
