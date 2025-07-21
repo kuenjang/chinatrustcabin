@@ -21,6 +21,7 @@ interface CartItem {
   size: string;
   specialRequest: string;
   category: string;
+  sugar: string; // 新增
 }
 
 const menuItems: MenuItem[] = [
@@ -142,24 +143,18 @@ export default function HomePage() {
     setShowSelectionModal(true);
   };
 
-  // 處理加入購物車
-  const handleAddToCart = (item: MenuItem, quantity: number, size: string, specialRequest: string) => {
-    // 計算實際價格（包含大小加價）
-    let actualPrice = item.price;
-    if (size === '大杯') actualPrice += 5;
-    if (size === '大份') actualPrice += 10;
-
-    // 創建購物車項目
+  // 將 handleAddToCart 改為直接用傳進來的 price，不再根據 size 加價，並支援 sugar
+  const handleAddToCart = (item: MenuItem, quantity: number, size: string, specialRequest: string, price: number, sugar: string) => {
     const cartItem: CartItem = {
       id: item.id,
       name: item.name,
-      price: actualPrice,
+      price, // 直接用 modal 算好的單價
       quantity,
       size,
       specialRequest,
+      sugar,
       category: item.category
     };
-
     setCart(prev => [...prev, cartItem]);
   };
 
@@ -198,21 +193,19 @@ export default function HomePage() {
     try {
       // 將購物車項目轉換為訂單格式
       const orderItems = cart.map(item => ({
-        name: `${item.name}${item.size ? ` (${item.size})` : ''}`,
+        name: item.name, // 純品名
         quantity: item.quantity,
-        price: item.price,
+        size: item.size,
+        sugar: item.sugar,
         note: item.specialRequest || ''
       }));
-
       const orderData = {
         customer_name: '現場取餐',
         customer_phone: '現場取餐',
         customer_address: '現場取餐',
         note: cart.map(item => item.specialRequest).filter(note => note.trim()).join('; '),
-        total_amount: getTotalPrice(),
         items: orderItems
       };
-
       const response = await fetch('/api/orders', {
         method: 'POST',
         headers: {
@@ -251,35 +244,31 @@ export default function HomePage() {
   // 轉換為 OrderSidebar 需要的格式
   const getOrderItems = () => {
     return cart.map(item => ({
-      name: `${item.name}${item.size ? ` (${item.size})` : ''}`,
+      name: item.name, // 只傳純品名
+      size: item.size, // 額外傳 size
       price: item.price,
       qty: item.quantity,
-      note: item.specialRequest || ''
+      note: item.specialRequest || '',
+      sugar: item.sugar || ''
     }));
   };
 
-  const handleChangeQty = (name: string, qty: number) => {
-    const index = cart.findIndex(item => 
-      `${item.name}${item.size ? ` (${item.size})` : ''}` === name
-    );
+  const handleChangeQty = (name: string, size: string, qty: number) => {
+    const index = cart.findIndex(item => item.name === name && item.size === size);
     if (index !== -1) {
       updateCartItemQuantity(index, qty);
     }
   };
 
-  const handleRemove = (name: string) => {
-    const index = cart.findIndex(item => 
-      `${item.name}${item.size ? ` (${item.size})` : ''}` === name
-    );
+  const handleRemove = (name: string, size: string) => {
+    const index = cart.findIndex(item => item.name === name && item.size === size);
     if (index !== -1) {
       removeFromCart(index);
     }
   };
 
-  const handleChangeNote = (name: string, note: string) => {
-    const index = cart.findIndex(item => 
-      `${item.name}${item.size ? ` (${item.size})` : ''}` === name
-    );
+  const handleChangeNote = (name: string, size: string, note: string) => {
+    const index = cart.findIndex(item => item.name === name && item.size === size);
     if (index !== -1) {
       setCart(prev => prev.map((item, i) => 
         i === index ? { ...item, specialRequest: note } : item
@@ -382,9 +371,9 @@ export default function HomePage() {
           <div className="lg:col-span-1">
             <OrderSidebar
               order={getOrderItems()}
-              onChangeQty={handleChangeQty}
-              onRemove={handleRemove}
-              onChangeNote={handleChangeNote}
+              onChangeQty={(name, size, qty) => handleChangeQty(name, size, qty)}
+              onRemove={(name, size) => handleRemove(name, size)}
+              onChangeNote={(name, size, note) => handleChangeNote(name, size, note)}
               onCheckout={handleCheckout}
             />
           </div>

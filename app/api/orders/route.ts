@@ -1,69 +1,123 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase, supabaseAdmin } from '../../../lib/supabaseClient';
 
+// 內建菜單資料（與前端同步）
+const menuItems = [
+  { name: '紅茶', basePrice: 25, category: '飲料' },
+  { name: '綠茶', basePrice: 25, category: '飲料' },
+  { name: '奶茶', basePrice: 25, category: '飲料' },
+  { name: '鮮奶茶', basePrice: 45, category: '飲料' },
+  { name: '鮮奶綠', basePrice: 45, category: '飲料' },
+  { name: '阿華田', basePrice: 45, category: '飲料' },
+  { name: '多多綠', basePrice: 45, category: '飲料' },
+  { name: '多多檸檬', basePrice: 45, category: '飲料' },
+  { name: '冬瓜檸檬', basePrice: 45, category: '飲料' },
+  { name: '薄荷綠', basePrice: 25, category: '飲料' },
+  { name: '薄荷奶綠', basePrice: 45, category: '飲料' },
+  { name: '奶綠', basePrice: 25, category: '飲料' },
+  { name: '檸檬紅', basePrice: 30, category: '飲料' },
+  { name: '檸檬綠', basePrice: 30, category: '飲料' },
+  { name: '蜜茶', basePrice: 25, category: '飲料' },
+  { name: '可可亞', basePrice: 45, category: '飲料' },
+  { name: '椰果奶茶', basePrice: 45, category: '飲料' },
+  { name: '黑咖啡', basePrice: 50, category: '飲料' },
+  { name: '拿鐵咖啡', basePrice: 55, category: '飲料' },
+  // ... 其他品項
+];
+
+function calcItemPrice(item) {
+  const menu = menuItems.find(m => m.name === item.name);
+  if (!menu) throw new Error('找不到菜單品項: ' + item.name);
+  let price = menu.basePrice;
+  // 飲料類特殊加減價
+  if (["紅茶", "鮮奶茶", "鮮奶綠", "阿華田", "多多綠", "多多檸檬", "冬瓜檸檬", "薄荷綠", "薄荷奶綠", "奶綠", "檸檬紅", "檸檬綠", "蜜茶", "可可亞", "椰果奶茶", "黑咖啡", "拿鐵咖啡"].includes(item.name)) {
+    if (item.size === '中杯') price -= 5;
+    if (item.size === '小杯') price -= 10;
+  } else if (["綠茶", "奶茶"].includes(item.name)) {
+    if (item.size === '中杯') price -= 5;
+    if (item.size === '小杯') price -= 10;
+  } else {
+    if (item.size === '大杯') price += 5;
+    if (item.size === '大份') price += 10;
+  }
+  // 其他加料可依需求擴充
+  return price;
+}
+
+// 產生唯一 order_number
+async function generateOrderNumber() {
+  const today = new Date().toISOString().split('T')[0].replace(/-/g, '');
+  let tryCount = 0;
+  while (tryCount < 5) {
+    const order_number = today + '-' + String(Math.floor(Math.random() * 10000)).padStart(4, '0');
+    const { data } = await supabaseAdmin.from('orders').select('id').eq('order_number', order_number);
+    if (!data || data.length === 0) return order_number;
+    tryCount++;
+  }
+  throw new Error('無法產生唯一訂單號碼，請稍後再試');
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { customer_name, customer_phone, customer_address, note, total_amount, items } = body;
+    const { customer_name, customer_phone, customer_address, note, items } = body;
 
-    // 生成訂單號碼 - 四碼格式，每天重新計數
-    const today = new Date().toISOString().split('T')[0].replace(/-/g, '');
-    
-    // 取得今日的訂單數量
-    const { data: todayOrders, error: countError } = await supabaseAdmin
-      .from('orders')
-      .select('id')
-      .gte('created_at', `${today.substring(0, 4)}-${today.substring(4, 6)}-${today.substring(6, 8)}`)
-      .lt('created_at', `${today.substring(0, 4)}-${today.substring(4, 6)}-${parseInt(today.substring(6, 8)) + 1}`);
-    
-    if (countError) {
-      console.error('計算今日訂單數量失敗:', countError);
-      return NextResponse.json({ error: '生成訂單號碼失敗' }, { status: 500 });
-    }
-    
-    // 今日訂單數量 + 1，格式化為4位數
-    const todayOrderCount = (todayOrders?.length || 0) + 1;
-    const order_number = todayOrderCount.toString().padStart(4, '0');
+    // 計算訂單總金額
+    let total_amount = 0;
+    const orderItems = items.map((item: any) => {
+      const price = calcItemPrice(item);
+      const subtotal = price * item.quantity;
+      total_amount += subtotal;
+      return {
+        menu_item_name: item.name,
+        price,
+        quantity: item.quantity,
+        subtotal,
+        size: item.size || '',
+        sugar: item.sugar || '',
+        notes: item.note || item.specialRequest || ''
+      };
+    });
 
-    // 使用服務端 Supabase 客戶端插入訂單（繞過 RLS）
+    // 產生唯一訂單號碼
+    const order_number = await generateOrderNumber();
+
+    // 插入訂單
+    console.log('order insert:', { order_number, customer_name, customer_phone, customer_address, note, total_amount });
     const { data: order, error: orderError } = await supabaseAdmin
       .from('orders')
       .insert([
         {
           order_number,
-          channel_code: 'ON', // 線上點餐
+          channel_code: 'ON',
           customer_name,
           customer_phone,
           customer_address,
-          note: note, // 使用實際的欄位名稱
+          note,
           total_amount,
           status: 'pending'
         }
       ])
       .select()
       .single();
-
+    console.log('order insert result:', { order, orderError });
     if (orderError) {
       console.error('訂單插入錯誤:', orderError);
-      return NextResponse.json({ error: '訂單創建失敗' }, { status: 500 });
+      return NextResponse.json({ error: '訂單創建失敗', detail: orderError }, { status: 500 });
     }
 
     // 插入訂單項目
-    const orderItems = items.map((item: any) => ({
-      order_id: order.id,
-      menu_item_name: item.name, // 使用實際的欄位名稱
-      price: item.price,
-      quantity: item.quantity,
-      subtotal: item.quantity * item.price // 使用實際的欄位名稱
+    const orderItemsWithOrderId = orderItems.map(item => ({
+      ...item,
+      order_id: order.id
     }));
-
+    console.log('orderItemsWithOrderId:', orderItemsWithOrderId);
     const { error: itemsError } = await supabaseAdmin
       .from('order_items')
-      .insert(orderItems);
-
+      .insert(orderItemsWithOrderId);
     if (itemsError) {
       console.error('訂單項目插入錯誤:', itemsError);
-      return NextResponse.json({ error: '訂單項目創建失敗' }, { status: 500 });
+      return NextResponse.json({ error: '訂單項目創建失敗', detail: itemsError }, { status: 500 });
     }
 
     // 使用台灣時區格式化時間
@@ -172,15 +226,10 @@ ${note ? `📌 備註: ${note}` : ''}
       console.error('❌ Line 通知發送失敗:', lineError);
     }
 
-    return NextResponse.json({ 
-      success: true, 
-      order_number,
-      order_id: order.id 
-    });
-
+    return NextResponse.json({ success: true, order_number });
   } catch (error) {
     console.error('API 錯誤:', error);
-    return NextResponse.json({ error: '伺服器錯誤' }, { status: 500 });
+    return NextResponse.json({ error: error instanceof Error ? error.message : String(error), detail: error }, { status: 500 });
   }
 }
 

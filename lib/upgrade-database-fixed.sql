@@ -59,5 +59,19 @@ CREATE POLICY "Allow all operations on orders" ON orders FOR ALL USING (true);
 DROP POLICY IF EXISTS "Allow all operations on order_items" ON order_items;
 CREATE POLICY "Allow all operations on order_items" ON order_items FOR ALL USING (true);
 
+-- 9. 升級 order_items 結構（如尚未存在）
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='order_items' AND column_name='size') THEN
+        ALTER TABLE order_items ADD COLUMN size VARCHAR(20);
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='order_items' AND column_name='sugar') THEN
+        ALTER TABLE order_items ADD COLUMN sugar VARCHAR(20);
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='order_items' AND column_name='notes') THEN
+        ALTER TABLE order_items ADD COLUMN notes TEXT;
+    END IF;
+END$$;
+
 -- 8. 檢查結果
 SELECT 'Database upgrade completed successfully!' as status; 

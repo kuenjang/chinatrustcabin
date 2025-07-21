@@ -2,16 +2,18 @@ import React from 'react';
 
 interface OrderItem {
   name: string;
+  size?: string;
   price: number;
   qty: number;
   note?: string;
+  sugar?: string;
 }
 
 interface OrderSidebarProps {
   order: OrderItem[];
-  onChangeQty: (name: string, qty: number) => void;
-  onRemove: (name: string) => void;
-  onChangeNote: (name: string, note: string) => void;
+  onChangeQty: (name: string, size: string, qty: number) => void;
+  onRemove: (name: string, size: string) => void;
+  onChangeNote: (name: string, size: string, note: string) => void;
   onCheckout?: () => void;
 }
 
@@ -48,13 +50,15 @@ const OrderSidebar: React.FC<OrderSidebarProps> = ({ order, onChangeQty, onRemov
         ) : (
           order.map((item, index) => (
             <div 
-              key={item.name} 
+              key={item.name + (item.size || '')} 
               className="flex flex-col gap-2 border-b border-gray-200 dark:border-gray-700 pb-4 mb-2 last:border-b-0 last:pb-0 last:mb-0 animate-fade-in"
               style={{ animationDelay: `${index * 100}ms` }}
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="flex-1 min-w-0">
-                  <div className="font-semibold text-gray-900 dark:text-gray-100 text-base">{item.name}</div>
+                  <div className="font-semibold text-gray-900 dark:text-gray-100 text-base">
+                    {item.name}{item.size ? ` (${item.size})` : ''}
+                  </div>
                   <div className="text-xs text-gray-500 dark:text-gray-400">NT${item.price}</div>
                 </div>
                 <div className="flex items-center gap-2">
@@ -63,7 +67,7 @@ const OrderSidebar: React.FC<OrderSidebarProps> = ({ order, onChangeQty, onRemov
                   </span>
                   <button
                     className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-pink-100 dark:hover:bg-pink-900/30 hover:text-pink-600 dark:hover:text-pink-400 transition-all duration-200 flex items-center justify-center"
-                    onClick={() => onChangeQty(item.name, item.qty - 1)}
+                    onClick={() => onChangeQty(item.name, item.size || '', item.qty - 1)}
                     disabled={item.qty <= 1}
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -73,7 +77,7 @@ const OrderSidebar: React.FC<OrderSidebarProps> = ({ order, onChangeQty, onRemov
                   <span className="text-gray-700 dark:text-gray-300 font-bold w-8 text-center">{item.qty}</span>
                   <button
                     className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-pink-100 dark:hover:bg-pink-900/30 hover:text-pink-600 dark:hover:text-pink-400 transition-all duration-200 flex items-center justify-center"
-                    onClick={() => onChangeQty(item.name, item.qty + 1)}
+                    onClick={() => onChangeQty(item.name, item.size || '', item.qty + 1)}
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -81,7 +85,7 @@ const OrderSidebar: React.FC<OrderSidebarProps> = ({ order, onChangeQty, onRemov
                   </button>
                   <button
                     className="w-8 h-8 rounded-full bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-900/50 transition-all duration-200 flex items-center justify-center"
-                    onClick={() => onRemove(item.name)}
+                    onClick={() => onRemove(item.name, item.size || '')}
                     title="刪除"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -98,7 +102,7 @@ const OrderSidebar: React.FC<OrderSidebarProps> = ({ order, onChangeQty, onRemov
                   rows={2}
                   placeholder="添加特殊要求..."
                   value={item.note || ''}
-                  onChange={e => onChangeNote(item.name, e.target.value)}
+                  onChange={e => onChangeNote(item.name, item.size || '', e.target.value)}
                 />
                 <div className="absolute top-2 right-2 text-xs text-gray-400 dark:text-gray-500">
                   💬

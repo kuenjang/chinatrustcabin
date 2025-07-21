@@ -12,7 +12,7 @@ interface ItemSelectionModalProps {
   item: MenuItem | null;
   isOpen: boolean;
   onClose: () => void;
-  onAddToCart: (item: MenuItem, quantity: number, size: string, specialRequest: string) => void;
+  onAddToCart: (item: MenuItem, quantity: number, size: string, specialRequest: string, unitPrice: number, sugar: string) => void;
 }
 
 const ItemSelectionModal: React.FC<ItemSelectionModalProps> = ({
@@ -129,11 +129,11 @@ const ItemSelectionModal: React.FC<ItemSelectionModalProps> = ({
       if (addEgg) extra += '加蛋 ';
       if (addCheese) extra += '加起司 ';
     }
-    // 需要糖度的飲品
     let sugarText = '';
     if (sugarSizeDrinks.includes(item.name) || ["綠茶", "奶茶"].includes(item.name)) sugarText = `糖度:${sugar} `;
     const finalRequest = (specialRequest + ' ' + sugarText + extra).trim();
-    onAddToCart(item, quantity, size, finalRequest);
+    const unitPrice = calculatePrice() / quantity;
+    onAddToCart(item, quantity, size, finalRequest, unitPrice, sugar);
     onClose();
   };
 
@@ -148,7 +148,8 @@ const ItemSelectionModal: React.FC<ItemSelectionModalProps> = ({
     let sugarText = '';
     if (sugarSizeDrinks.includes(item.name) || ["綠茶", "奶茶"].includes(item.name)) sugarText = `糖度:${sugar} `;
     const finalRequest = (specialRequest + ' ' + sugarText + extra).trim();
-    onAddToCart(item, quantity, size, finalRequest);
+    const unitPrice = calculatePrice() / quantity;
+    onAddToCart(item, quantity, size, finalRequest, unitPrice, sugar);
     onClose();
   };
 
@@ -255,6 +256,28 @@ const ItemSelectionModal: React.FC<ItemSelectionModalProps> = ({
 
           {/* 紅茶糖度選擇 */}
           {item.name === '紅茶' && (
+            <div className="space-y-3">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                糖度
+              </label>
+              <div className="flex gap-4">
+                {['正常', '無糖', '少糖'].map((level) => (
+                  <label key={level} className={`flex items-center gap-2 cursor-pointer ${sugar === level ? 'font-bold text-orange-600' : ''}`}>
+                    <input
+                      type="radio"
+                      checked={sugar === level}
+                      onChange={() => setSugar(level)}
+                      className="accent-orange-500 w-5 h-5"
+                    />
+                    <span>{level}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* 糖度選項顯示條件統一為 sugarSizeDrinks.includes(item.name) */}
+          {sugarSizeDrinks.includes(item.name) && (
             <div className="space-y-3">
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                 糖度
