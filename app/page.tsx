@@ -65,9 +65,9 @@ const menuItems: MenuItem[] = [
   { id: 28, name: '水餃', price: 50, category: '水餃類', description: '手工水餃，皮薄餡多' },
 
   // 鐵板麵類
-  { id: 29, name: '蘑菇麵', price: 40, category: '鐵板麵', description: '蘑菇鐵板麵 (+蛋10元)' },
-  { id: 30, name: '黑胡椒麵', price: 40, category: '鐵板麵', description: '黑胡椒鐵板麵 (+蛋10元)' },
-  { id: 31, name: '蕃茄肉醬麵', price: 40, category: '鐵板麵', description: '蕃茄肉醬鐵板麵 (+蛋10元)' },
+  { id: 29, name: '蘑菇麵', price: 40, category: '鐵板麵', description: '蘑菇鐵板麵' },
+  { id: 30, name: '黑胡椒麵', price: 40, category: '鐵板麵', description: '黑胡椒鐵板麵' },
+  { id: 31, name: '蕃茄肉醬麵', price: 40, category: '鐵板麵', description: '蕃茄肉醬鐵板麵' },
 
   // 厚片類
   { id: 32, name: '巧克力厚片', price: 30, category: '厚片', description: '巧克力厚片吐司' },

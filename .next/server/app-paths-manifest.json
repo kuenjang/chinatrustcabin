@@ -1,7 +1,3 @@
 {
-  "/api/check-duplicates/route": "app/api/check-duplicates/route.js",
-  "/api/debug-orders/route": "app/api/debug-orders/route.js",
-  "/api/fix-order-number/route": "app/api/fix-order-number/route.js",
-  "/api/orders/route": "app/api/orders/route.js",
-  "/test-order/page": "app/test-order/page.js"
+  "/page": "app/page.js"
 }

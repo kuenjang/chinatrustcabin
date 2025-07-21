@@ -24,6 +24,8 @@ const ItemSelectionModal: React.FC<ItemSelectionModalProps> = ({
   const [quantity, setQuantity] = useState(1);
   const [size, setSize] = useState('');
   const [specialRequest, setSpecialRequest] = useState('');
+  const [addEgg, setAddEgg] = useState(false);
+  const [addCheese, setAddCheese] = useState(false);
 
   // 根據餐品類別設定預設大小選項
   const getSizeOptions = () => {
@@ -37,6 +39,7 @@ const ItemSelectionModal: React.FC<ItemSelectionModalProps> = ({
         ];
       case '蛋餅':
       case '炒飯麵類':
+      case '鐵板麵':
       case '鐵板麵類':
       case '鍋燒系列':
       case '飯類':
@@ -53,14 +56,20 @@ const ItemSelectionModal: React.FC<ItemSelectionModalProps> = ({
   const sizeOptions = getSizeOptions();
   const hasSizeOptions = sizeOptions.length > 0;
 
-  // 計算價格（包含大小加價）
+  // 需要加料選項的分類
+  const extraOptionCategories = ['鐵板麵', '鐵板麵類', '炒飯麵類', '鍋燒系列', '蔥抓餅', '飯類'];
+
+  // 計算價格（包含大小加價與加蛋/加起司）
   const calculatePrice = () => {
     if (!item) return 0;
-    
     let basePrice = item.price;
     if (size === '大杯') basePrice += 5;
     if (size === '大份') basePrice += 10;
-    
+    // 只針對需要加料的分類加價
+    if (extraOptionCategories.includes(item.category)) {
+      if (addEgg) basePrice += 10;
+      if (addCheese) basePrice += 10;
+    }
     return basePrice * quantity;
   };
 
@@ -70,22 +79,35 @@ const ItemSelectionModal: React.FC<ItemSelectionModalProps> = ({
       setQuantity(1);
       setSize(hasSizeOptions ? sizeOptions[0].value : '');
       setSpecialRequest('');
+      setAddEgg(false);
+      setAddCheese(false);
     }
   }, [isOpen, item, hasSizeOptions]);
 
   // 處理加入購物車
   const handleAddToCart = () => {
     if (!item) return;
-    
-    onAddToCart(item, quantity, size, specialRequest);
+    // 將加蛋/加起司資訊加到 specialRequest
+    let extra = '';
+    if (extraOptionCategories.includes(item.category)) {
+      if (addEgg) extra += '加蛋 ';
+      if (addCheese) extra += '加起司 ';
+    }
+    const finalRequest = (specialRequest + ' ' + extra).trim();
+    onAddToCart(item, quantity, size, finalRequest);
     onClose();
   };
 
   // 處理繼續點餐
   const handleContinueOrdering = () => {
     if (!item) return;
-    
-    onAddToCart(item, quantity, size, specialRequest);
+    let extra = '';
+    if (extraOptionCategories.includes(item.category)) {
+      if (addEgg) extra += '加蛋 ';
+      if (addCheese) extra += '加起司 ';
+    }
+    const finalRequest = (specialRequest + ' ' + extra).trim();
+    onAddToCart(item, quantity, size, finalRequest);
     onClose();
   };
 
@@ -186,6 +208,35 @@ const ItemSelectionModal: React.FC<ItemSelectionModalProps> = ({
                     {option.label}
                   </button>
                 ))}
+              </div>
+            </div>
+          )}
+
+          {/* 鐵板麵加料選項 */}
+          {extraOptionCategories.includes(item.category) && (
+            <div className="space-y-3">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                加料選擇
+              </label>
+              <div className="flex gap-4">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={addEgg}
+                    onChange={() => setAddEgg(v => !v)}
+                    className="accent-orange-500 w-5 h-5"
+                  />
+                  <span className="text-gray-700 dark:text-gray-300">加蛋 +10元</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={addCheese}
+                    onChange={() => setAddCheese(v => !v)}
+                    className="accent-orange-500 w-5 h-5"
+                  />
+                  <span className="text-gray-700 dark:text-gray-300">加起司 +10元</span>
+                </label>
               </div>
             </div>
           )}
