@@ -6,24 +6,22 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { customer_name, customer_phone, customer_address, note, total_amount, items } = body;
 
-    // 生成訂單號碼 - 四碼格式，每天重新計數
-    const today = new Date().toISOString().split('T')[0].replace(/-/g, '');
-    
-    // 取得今日的訂單數量
-    const { data: todayOrders, error: countError } = await supabaseAdmin
+    // 生成訂單號碼 - 四碼格式，使用全域最大號碼
+    const { data: maxOrder, error: maxOrderError } = await supabaseAdmin
       .from('orders')
-      .select('id')
-      .gte('created_at', `${today.substring(0, 4)}-${today.substring(4, 6)}-${today.substring(6, 8)}`)
-      .lt('created_at', `${today.substring(0, 4)}-${today.substring(4, 6)}-${parseInt(today.substring(6, 8)) + 1}`);
+      .select('order_number')
+      .order('order_number', { ascending: false })
+      .limit(1)
+      .single();
     
-    if (countError) {
-      console.error('計算今日訂單數量失敗:', countError);
+    if (maxOrderError) {
+      console.error('查詢最大訂單號碼失敗:', maxOrderError);
       return NextResponse.json({ error: '生成訂單號碼失敗' }, { status: 500 });
     }
     
-    // 今日訂單數量 + 1，格式化為4位數
-    const todayOrderCount = (todayOrders?.length || 0) + 1;
-    const order_number = todayOrderCount.toString().padStart(4, '0');
+    // 最大訂單號碼 + 1，格式化為4位數
+    const maxNumber = parseInt(maxOrder.order_number);
+    const order_number = (maxNumber + 1).toString().padStart(4, '0');
 
     // 使用服務端 Supabase 客戶端插入訂單（繞過 RLS）
     const { data: order, error: orderError } = await supabaseAdmin
