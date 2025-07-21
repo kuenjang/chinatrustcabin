@@ -26,11 +26,37 @@ const ItemSelectionModal: React.FC<ItemSelectionModalProps> = ({
   const [specialRequest, setSpecialRequest] = useState('');
   const [addEgg, setAddEgg] = useState(false);
   const [addCheese, setAddCheese] = useState(false);
+  const [sugar, setSugar] = useState('正常');
 
-  // 根據餐品類別設定預設大小選項
+  // 需要糖度與大小選擇的飲品
+  const sugarSizeDrinks = [
+    "紅茶", "鮮奶茶", "鮮奶綠",
+    "阿華田", "多多綠", "多多檸檬", "冬瓜檸檬", "薄荷綠", "薄荷奶綠", "奶綠", "檸檬紅", "檸檬綠", "蜜茶", "可可亞", "椰果奶茶", "黑咖啡", "拿鐵咖啡"
+  ];
+
+  // 紅茶專用大小選項
   const getSizeOptions = () => {
     if (!item) return [];
-    
+    if (item.name === '紅茶') {
+      return [
+        { value: '大杯', label: '大杯' },
+        { value: '中杯', label: '中杯 (-5元)' },
+        { value: '小杯', label: '小杯 (-10元)' }
+      ];
+    }
+    if (sugarSizeDrinks.includes(item.name)) {
+      return [
+        { value: '大杯', label: '大杯' },
+        { value: '中杯', label: '中杯 (-5元)' }
+      ];
+    }
+    if (["綠茶", "奶茶"].includes(item.name)) {
+      return [
+        { value: '大杯', label: '大杯' },
+        { value: '中杯', label: '中杯 (-5元)' },
+        { value: '小杯', label: '小杯 (-10元)' }
+      ];
+    }
     switch (item.category) {
       case '飲料':
         return [
@@ -49,7 +75,7 @@ const ItemSelectionModal: React.FC<ItemSelectionModalProps> = ({
           { value: '大份', label: '大份 (+10元)' }
         ];
       default:
-        return []; // 蔥抓餅、厚片等不需要大小選擇
+        return [];
     }
   };
 
@@ -63,9 +89,19 @@ const ItemSelectionModal: React.FC<ItemSelectionModalProps> = ({
   const calculatePrice = () => {
     if (!item) return 0;
     let basePrice = item.price;
-    if (size === '大杯') basePrice += 5;
-    if (size === '大份') basePrice += 10;
-    // 只針對需要加料的分類加價
+    // 紅茶特殊價格
+    if (item.name === '紅茶') {
+      if (size === '中杯') basePrice -= 5;
+      if (size === '小杯') basePrice -= 10;
+    } else if (sugarSizeDrinks.includes(item.name)) {
+      if (size === '中杯') basePrice -= 5;
+    } else if (["綠茶", "奶茶"].includes(item.name)) {
+      if (size === '中杯') basePrice -= 5;
+      if (size === '小杯') basePrice -= 10;
+    } else {
+      if (size === '大杯') basePrice += 5;
+      if (size === '大份') basePrice += 10;
+    }
     if (extraOptionCategories.includes(item.category)) {
       if (addEgg) basePrice += 10;
       if (addCheese) basePrice += 10;
@@ -77,23 +113,26 @@ const ItemSelectionModal: React.FC<ItemSelectionModalProps> = ({
   useEffect(() => {
     if (isOpen && item) {
       setQuantity(1);
-      setSize(hasSizeOptions ? sizeOptions[0].value : '');
+      setSize(item.name === '紅茶' ? '大杯' : (sugarSizeDrinks.includes(item?.name) || ["綠茶", "奶茶"].includes(item?.name)) ? '大杯' : (hasSizeOptions ? sizeOptions[0].value : ''));
       setSpecialRequest('');
       setAddEgg(false);
       setAddCheese(false);
+      setSugar('正常');
     }
   }, [isOpen, item, hasSizeOptions]);
 
   // 處理加入購物車
   const handleAddToCart = () => {
     if (!item) return;
-    // 將加蛋/加起司資訊加到 specialRequest
     let extra = '';
     if (extraOptionCategories.includes(item.category)) {
       if (addEgg) extra += '加蛋 ';
       if (addCheese) extra += '加起司 ';
     }
-    const finalRequest = (specialRequest + ' ' + extra).trim();
+    // 需要糖度的飲品
+    let sugarText = '';
+    if (sugarSizeDrinks.includes(item.name) || ["綠茶", "奶茶"].includes(item.name)) sugarText = `糖度:${sugar} `;
+    const finalRequest = (specialRequest + ' ' + sugarText + extra).trim();
     onAddToCart(item, quantity, size, finalRequest);
     onClose();
   };
@@ -106,7 +145,9 @@ const ItemSelectionModal: React.FC<ItemSelectionModalProps> = ({
       if (addEgg) extra += '加蛋 ';
       if (addCheese) extra += '加起司 ';
     }
-    const finalRequest = (specialRequest + ' ' + extra).trim();
+    let sugarText = '';
+    if (sugarSizeDrinks.includes(item.name) || ["綠茶", "奶茶"].includes(item.name)) sugarText = `糖度:${sugar} `;
+    const finalRequest = (specialRequest + ' ' + sugarText + extra).trim();
     onAddToCart(item, quantity, size, finalRequest);
     onClose();
   };
@@ -190,9 +231,9 @@ const ItemSelectionModal: React.FC<ItemSelectionModalProps> = ({
           {hasSizeOptions && (
             <div className="space-y-3">
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                {item.category === '飲料' ? '杯量選擇' : '大小選擇'}
+                大小選擇
               </label>
-              <div className="grid grid-cols-2 gap-3">
+              <div className={`grid gap-3 ${sizeOptions.length === 2 ? 'grid-cols-2' : 'grid-cols-3'}`}>
                 {sizeOptions.map((option) => (
                   <button
                     key={option.value}
@@ -207,6 +248,28 @@ const ItemSelectionModal: React.FC<ItemSelectionModalProps> = ({
                   >
                     {option.label}
                   </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* 紅茶糖度選擇 */}
+          {item.name === '紅茶' && (
+            <div className="space-y-3">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                糖度
+              </label>
+              <div className="flex gap-4">
+                {['正常', '無糖', '少糖'].map((level) => (
+                  <label key={level} className={`flex items-center gap-2 cursor-pointer ${sugar === level ? 'font-bold text-orange-600' : ''}`}>
+                    <input
+                      type="radio"
+                      checked={sugar === level}
+                      onChange={() => setSugar(level)}
+                      className="accent-orange-500 w-5 h-5"
+                    />
+                    <span>{level}</span>
+                  </label>
                 ))}
               </div>
             </div>
