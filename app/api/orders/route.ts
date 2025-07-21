@@ -3,6 +3,49 @@ import { supabase, supabaseAdmin } from '../../../lib/supabaseClient';
 
 // 內建菜單資料（與前端同步）
 const menuItems = [
+  // 蛋餅類
+  { name: '原味蛋餅', basePrice: 20, category: '蛋餅' },
+  { name: '蔬菜蛋餅', basePrice: 25, category: '蛋餅' },
+  { name: '玉米蛋餅', basePrice: 30, category: '蛋餅' },
+  { name: '肉鬆蛋餅', basePrice: 30, category: '蛋餅' },
+  { name: '熱狗蛋餅', basePrice: 30, category: '蛋餅' },
+  { name: '火腿蛋餅', basePrice: 30, category: '蛋餅' },
+  { name: '起司蛋餅', basePrice: 30, category: '蛋餅' },
+  { name: '薯餅蛋餅', basePrice: 35, category: '蛋餅' },
+  { name: '鮪魚蛋餅', basePrice: 35, category: '蛋餅' },
+  // 蔥抓餅類
+  { name: '原味蔥抓餅', basePrice: 30, category: '蔥抓餅' },
+  { name: '加蛋蔥抓餅', basePrice: 40, category: '蔥抓餅' },
+  { name: '火腿蔥抓餅', basePrice: 45, category: '蔥抓餅' },
+  { name: '玉米蔥抓餅', basePrice: 45, category: '蔥抓餅' },
+  { name: '肉鬆蔥抓餅', basePrice: 45, category: '蔥抓餅' },
+  { name: '起司蔥抓餅', basePrice: 45, category: '蔥抓餅' },
+  { name: '鮪魚蔥抓餅', basePrice: 50, category: '蔥抓餅' },
+  { name: '培根蔥抓餅', basePrice: 50, category: '蔥抓餅' },
+  { name: '薯餅蔥抓餅', basePrice: 55, category: '蔥抓餅' },
+  // 炒飯麵類
+  { name: '炒飯', basePrice: 60, category: '炒飯麵類' },
+  { name: '炒泡麵', basePrice: 50, category: '炒飯麵類' },
+  { name: '炒意麵', basePrice: 55, category: '炒飯麵類' },
+  // 鍋燒系列
+  { name: '鍋燒意麵', basePrice: 70, category: '鍋燒系列' },
+  { name: '鍋燒雞絲', basePrice: 75, category: '鍋燒系列' },
+  { name: '鍋燒烏龍麵', basePrice: 70, category: '鍋燒系列' },
+  { name: '鍋燒泡麵', basePrice: 65, category: '鍋燒系列' },
+  // 飯類
+  { name: '雞肉飯', basePrice: 60, category: '飯類' },
+  { name: '肉燥飯', basePrice: 55, category: '飯類' },
+  // 水餃類
+  { name: '水餃', basePrice: 50, category: '水餃類' },
+  // 鐵板麵類
+  { name: '蘑菇麵', basePrice: 40, category: '鐵板麵' },
+  { name: '黑胡椒麵', basePrice: 40, category: '鐵板麵' },
+  { name: '蕃茄肉醬麵', basePrice: 40, category: '鐵板麵' },
+  // 厚片類
+  { name: '巧克力厚片', basePrice: 30, category: '厚片' },
+  { name: '花生厚片', basePrice: 30, category: '厚片' },
+  { name: '奶酥厚片', basePrice: 30, category: '厚片' },
+  // 飲料類
   { name: '紅茶', basePrice: 25, category: '飲料' },
   { name: '綠茶', basePrice: 25, category: '飲料' },
   { name: '奶茶', basePrice: 25, category: '飲料' },
@@ -11,18 +54,22 @@ const menuItems = [
   { name: '阿華田', basePrice: 45, category: '飲料' },
   { name: '多多綠', basePrice: 45, category: '飲料' },
   { name: '多多檸檬', basePrice: 45, category: '飲料' },
+  { name: '冬瓜茶', basePrice: 25, category: '飲料' },
+  { name: '冬瓜紅', basePrice: 25, category: '飲料' },
+  { name: '冬瓜綠', basePrice: 25, category: '飲料' },
   { name: '冬瓜檸檬', basePrice: 45, category: '飲料' },
   { name: '薄荷綠', basePrice: 25, category: '飲料' },
   { name: '薄荷奶綠', basePrice: 45, category: '飲料' },
   { name: '奶綠', basePrice: 25, category: '飲料' },
   { name: '檸檬紅', basePrice: 30, category: '飲料' },
   { name: '檸檬綠', basePrice: 30, category: '飲料' },
+  { name: '梅子綠', basePrice: 25, category: '飲料' },
   { name: '蜜茶', basePrice: 25, category: '飲料' },
-  { name: '可可亞', basePrice: 45, category: '飲料' },
   { name: '椰果奶茶', basePrice: 45, category: '飲料' },
+  { name: '豆漿', basePrice: 25, category: '飲料' },
+  { name: '可可亞', basePrice: 45, category: '飲料' },
   { name: '黑咖啡', basePrice: 50, category: '飲料' },
   { name: '拿鐵咖啡', basePrice: 55, category: '飲料' },
-  // ... 其他品項
 ];
 
 function calcItemPrice(item) {
