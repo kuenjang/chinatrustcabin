@@ -66,21 +66,19 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: '訂單項目創建失敗' }, { status: 500 });
     }
 
-    // 發送 Telegram 通知
-    try {
-      // 使用台灣時區格式化時間
-      const taiwanTime = new Date().toLocaleString('zh-TW', {
-        timeZone: 'Asia/Taipei',
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit',
-        hour12: false
-      });
+    // 使用台灣時區格式化時間
+    const taiwanTime = new Date().toLocaleString('zh-TW', {
+      timeZone: 'Asia/Taipei',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false
+    });
 
-      const telegramMessage = `
+    const orderMessage = `
 🆕 新訂單通知
 
 📋 訂單號碼: ${order_number}
@@ -95,9 +93,10 @@ ${items.map((item: any) => `• ${item.name} x${item.quantity} = NT$ ${item.quan
 ${note ? `📌 備註: ${note}` : ''}
 
 ⏰ 下單時間: ${taiwanTime} (台灣時間)
-      `;
+    `;
 
-      // 直接調用 Telegram API，不通過內部 API 路由
+    // 發送 Telegram 通知
+    try {
       const botToken = process.env.TELEGRAM_BOT_TOKEN;
       const chatId = process.env.TELEGRAM_CHAT_ID;
 
@@ -111,7 +110,7 @@ ${note ? `📌 備註: ${note}` : ''}
           },
           body: JSON.stringify({
             chat_id: chatId,
-            text: telegramMessage,
+            text: orderMessage,
             parse_mode: 'HTML'
           }),
         });
@@ -130,6 +129,47 @@ ${note ? `📌 備註: ${note}` : ''}
       }
     } catch (telegramError) {
       console.error('❌ Telegram 通知發送失敗:', telegramError);
+    }
+
+    // 發送 Line 通知
+    try {
+      const lineToken = process.env.LINE_CHANNEL_ACCESS_TOKEN;
+      const lineUserId = process.env.LINE_USER_ID;
+
+      if (lineToken && lineUserId) {
+        const lineUrl = 'https://api.line.me/v2/bot/message/push';
+        
+        const lineResponse = await fetch(lineUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${lineToken}`
+          },
+          body: JSON.stringify({
+            to: lineUserId,
+            messages: [
+              {
+                type: 'text',
+                text: orderMessage
+              }
+            ]
+          }),
+        });
+
+        if (lineResponse.ok) {
+          console.log('✅ Line 通知發送成功');
+        } else {
+          const errorData = await lineResponse.json();
+          console.error('❌ Line API 錯誤:', errorData);
+        }
+      } else {
+        console.error('❌ Line 設定缺失:', { 
+          hasLineToken: !!lineToken, 
+          hasLineUserId: !!lineUserId 
+        });
+      }
+    } catch (lineError) {
+      console.error('❌ Line 通知發送失敗:', lineError);
     }
 
     return NextResponse.json({ 

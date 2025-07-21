@@ -31,6 +31,7 @@
 
 ### 即時通知
 - 📱 Telegram 即時通知
+- 💬 Line 即時通知
 - 📋 詳細的訂單資訊
 - ⏰ 自動時間戳記
 - 🎨 美觀的 Markdown 格式
@@ -65,11 +66,21 @@ cp env.example .env.local
 # 編輯 .env.local 檔案，填入你的設定
 ```
 
-### 4. 設定 Telegram Bot
+### 4. 設定通知系統
+
+#### Telegram Bot 設定
 1. 在 Telegram 中找到 @BotFather
 2. 建立新的 Bot 並獲得 Token
 3. 在 @userinfobot 中獲得你的 Chat ID
 4. 將這些資訊填入 `.env.local`
+
+#### Line Bot 設定
+1. 前往 [Line Developers Console](https://developers.line.biz/)
+2. 建立 Provider 和 Messaging API Channel
+3. 取得 Channel Access Token
+4. 取得您的 Line User ID
+5. 將這些資訊填入 `.env.local`
+6. 參考 [Line 設定指南](docs/line-setup.md) 取得詳細步驟
 
 ### 5. 啟動開發伺服器
 ```bash
@@ -86,8 +97,10 @@ app/
 ├── api/            # API 路由
 │   ├── orders/     # 訂單 API
 │   ├── telegram/   # Telegram 通知 API
-│   └── test-telegram/ # 測試 API
+│   ├── test-line/  # Line 通知測試 API
+│   └── test-telegram/ # Telegram 測試 API
 ├── components/     # React 組件
+├── test-line/      # Line 測試頁面
 └── globals.css     # 全域樣式
 
 components/
