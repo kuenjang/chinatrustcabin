@@ -210,9 +210,6 @@ export async function POST(request: NextRequest) {
 🆕 新訂單通知
 
 📋 訂單號碼: ${order_number}
-👤 客戶姓名: ${customer_name}
-📞 電話: ${customer_phone}
-📍 地址: ${customer_address || '無'}
 💰 總金額: NT$ ${total_amount}
 
 📝 訂單內容:
