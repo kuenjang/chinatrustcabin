@@ -26,13 +26,12 @@ interface CartItem {
 
 const menuItems: MenuItem[] = [
   // 蛋餅類
-  { id: 1, name: '原味蛋餅', price: 20, category: '蛋餅', description: '經典原味蛋餅' },
-  { id: 2, name: '蔬菜蛋餅', price: 25, category: '蛋餅', description: '新鮮蔬菜蛋餅' },
-  { id: 3, name: '玉米蛋餅', price: 30, category: '蛋餅', description: '香甜玉米蛋餅' },
-  { id: 4, name: '肉鬆蛋餅', price: 30, category: '蛋餅', description: '香酥肉鬆蛋餅' },
-  { id: 5, name: '熱狗蛋餅', price: 30, category: '蛋餅', description: '熱狗蛋餅' },
-  { id: 6, name: '火腿蛋餅', price: 30, category: '蛋餅', description: '火腿蛋餅' },
-  { id: 7, name: '起司蛋餅', price: 30, category: '蛋餅', description: '濃郁起司蛋餅' },
+  { id: 1, name: '原味蛋餅', price: 25, category: '蛋餅', description: '經典原味蛋餅' },
+  { id: 2, name: '玉米蛋餅', price: 35, category: '蛋餅', description: '香甜玉米蛋餅' },
+  { id: 3, name: '肉鬆蛋餅', price: 35, category: '蛋餅', description: '香酥肉鬆蛋餅' },
+  { id: 4, name: '熱狗蛋餅', price: 35, category: '蛋餅', description: '熱狗蛋餅' },
+  { id: 5, name: '火腿蛋餅', price: 35, category: '蛋餅', description: '火腿蛋餅' },
+  { id: 6, name: '起司蛋餅', price: 35, category: '蛋餅', description: '濃郁起司蛋餅' },
   { id: 8, name: '薯餅蛋餅', price: 35, category: '蛋餅', description: '香脆薯餅蛋餅' },
   { id: 9, name: '鮪魚蛋餅', price: 35, category: '蛋餅', description: '鮮美鮪魚蛋餅' },
 

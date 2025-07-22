@@ -22,6 +22,8 @@ interface OrderItem {
   quantity: number;
   price: number;
   subtotal: number;
+  size?: string; // Added for size option
+  notes?: string; // Added for notes option
 }
 
 interface TodayStats {
@@ -32,7 +34,7 @@ interface TodayStats {
 }
 
 export default function AdminPage() {
-  const [activeTab, setActiveTab] = useState<'details' | 'management' | 'overview'>('overview');
+  const [activeTab, setActiveTab] = useState<'details' | 'management' | 'overview'>('details');
   const [orders, setOrders] = useState<Order[]>([]);
   const [todayStats, setTodayStats] = useState<TodayStats>({
     total_orders: 0,
@@ -474,12 +476,16 @@ export default function AdminPage() {
                     <div className="border-t pt-4">
                       <h4 className="font-medium text-gray-900 mb-2">餐點明細:</h4>
                       <div className="space-y-2">
-                        {getOrderItems(order.id).map((item) => (
-                          <div key={item.id} className="flex justify-between items-center text-sm">
-                            <span>{item.menu_item_name} x{item.quantity}</span>
-                            <span className="text-gray-500">單價: ${item.price}</span>
-                          </div>
-                        ))}
+                        {getOrderItems(order.id).map((item) => {
+                          const options = [item.size, item.notes].filter(Boolean).join(', ');
+                          const displayName = options ? `${item.menu_item_name}（${options}）` : item.menu_item_name;
+                          return (
+                            <div key={item.id} className="flex justify-between items-center text-sm">
+                              <span>{displayName} x{item.quantity}</span>
+                              <span className="text-gray-500">單價: ${item.price}</span>
+                            </div>
+                          );
+                        })}
                       </div>
                     </div>
 
@@ -559,14 +565,18 @@ export default function AdminPage() {
                         </tr>
                       </thead>
                       <tbody className="bg-white divide-y divide-gray-200">
-                        {getOrderItems(selectedOrder.id).map((item) => (
-                          <tr key={item.id}>
-                            <td className="px-4 py-2 text-sm text-gray-900">{item.menu_item_name}</td>
-                            <td className="px-4 py-2 text-sm text-gray-500">{item.quantity}</td>
-                            <td className="px-4 py-2 text-sm text-gray-500">${item.price}</td>
-                            <td className="px-4 py-2 text-sm text-gray-900 font-medium">${item.subtotal}</td>
-                          </tr>
-                        ))}
+                        {getOrderItems(selectedOrder.id).map((item) => {
+                          const options = [item.size, item.notes].filter(Boolean).join(', ');
+                          const displayName = options ? `${item.menu_item_name}（${options}）` : item.menu_item_name;
+                          return (
+                            <tr key={item.id}>
+                              <td className="px-4 py-2 text-sm text-gray-900">{displayName}</td>
+                              <td className="px-4 py-2 text-sm text-gray-500">{item.quantity}</td>
+                              <td className="px-4 py-2 text-sm text-gray-500">${item.price}</td>
+                              <td className="px-4 py-2 text-sm text-gray-900 font-medium">${item.subtotal}</td>
+                            </tr>
+                          );
+                        })}
                       </tbody>
                     </table>
                   </div>

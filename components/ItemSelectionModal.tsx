@@ -37,11 +37,11 @@ const ItemSelectionModal: React.FC<ItemSelectionModalProps> = ({
   // 紅茶專用大小選項
   const getSizeOptions = () => {
     if (!item) return [];
-    if (item.name === '紅茶') {
+    // 紅茶與鮮奶茶同樣大小選擇：大杯/中杯
+    if (["紅茶", "鮮奶茶"].includes(item.name)) {
       return [
         { value: '大杯', label: '大杯' },
-        { value: '中杯', label: '中杯 (-5元)' },
-        { value: '小杯', label: '小杯 (-10元)' }
+        { value: '中杯', label: '中杯 (-5元)' }
       ];
     }
     if (sugarSizeDrinks.includes(item.name)) {
@@ -249,28 +249,6 @@ const ItemSelectionModal: React.FC<ItemSelectionModalProps> = ({
                   >
                     {option.label}
                   </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* 紅茶糖度選擇 */}
-          {item.name === '紅茶' && (
-            <div className="space-y-3">
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                糖度
-              </label>
-              <div className="flex gap-4">
-                {['正常', '無糖', '少糖'].map((level) => (
-                  <label key={level} className={`flex items-center gap-2 cursor-pointer ${sugar === level ? 'font-bold text-orange-600' : ''}`}>
-                    <input
-                      type="radio"
-                      checked={sugar === level}
-                      onChange={() => setSugar(level)}
-                      className="accent-orange-500 w-5 h-5"
-                    />
-                    <span>{level}</span>
-                  </label>
                 ))}
               </div>
             </div>
