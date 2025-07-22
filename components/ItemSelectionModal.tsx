@@ -31,7 +31,8 @@ const ItemSelectionModal: React.FC<ItemSelectionModalProps> = ({
   // 需要糖度與大小選擇的飲品
   const sugarSizeDrinks = [
     "紅茶", "鮮奶茶", "鮮奶綠",
-    "阿華田", "多多綠", "多多檸檬", "冬瓜檸檬", "薄荷綠", "薄荷奶綠", "奶綠", "檸檬紅", "檸檬綠", "蜜茶", "可可亞", "椰果奶茶", "黑咖啡", "拿鐵咖啡"
+    "阿華田", "多多綠", "多多檸檬", "冬瓜檸檬", "薄荷綠", "薄荷奶綠", "奶綠", "檸檬紅", "檸檬綠", "蜜茶", "可可亞", "椰果奶茶", "黑咖啡", "拿鐵咖啡",
+    "綠茶", "奶茶"
   ];
 
   // 紅茶專用大小選項
@@ -41,27 +42,26 @@ const ItemSelectionModal: React.FC<ItemSelectionModalProps> = ({
     if (["紅茶", "鮮奶茶"].includes(item.name)) {
       return [
         { value: '大杯', label: '大杯' },
-        { value: '中杯', label: '中杯 (-5元)' }
+        { value: '中杯', label: '中杯 ' }
       ];
     }
     if (sugarSizeDrinks.includes(item.name)) {
       return [
         { value: '大杯', label: '大杯' },
-        { value: '中杯', label: '中杯 (-5元)' }
+        { value: '中杯', label: '中杯 ' }
       ];
     }
     if (["綠茶", "奶茶"].includes(item.name)) {
       return [
         { value: '大杯', label: '大杯' },
-        { value: '中杯', label: '中杯 (-5元)' },
-        { value: '小杯', label: '小杯 (-10元)' }
+        { value: '中杯', label: '中杯 ' }
       ];
     }
     switch (item.category) {
       case '飲料':
         return [
           { value: '中杯', label: '中杯' },
-          { value: '大杯', label: '大杯 (+5元)' }
+          { value: '大杯', label: '大杯 ' }
         ];
       case '蛋餅':
       case '炒飯麵類':
@@ -72,7 +72,7 @@ const ItemSelectionModal: React.FC<ItemSelectionModalProps> = ({
       case '水餃類':
         return [
           { value: '小份', label: '小份' },
-          { value: '大份', label: '大份 (+10元)' }
+          { value: '大份', label: '大份 ' }
         ];
       default:
         return [];

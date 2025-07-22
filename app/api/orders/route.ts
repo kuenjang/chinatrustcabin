@@ -55,7 +55,7 @@ const menuItems = [
   // 飲料類
   { name: '紅茶', basePrice: 25, category: '飲料' },
   { name: '綠茶', basePrice: 25, category: '飲料' },
-  { name: '奶茶', basePrice: 25, category: '飲料' },
+  { name: '奶茶', basePrice: 35, category: '飲料' },
   { name: '鮮奶茶', basePrice: 45, category: '飲料' },
   { name: '鮮奶綠', basePrice: 45, category: '飲料' },
   { name: '冬瓜茶', basePrice: 25, category: '飲料' },
@@ -84,12 +84,8 @@ function calcItemPrice(item) {
   if (!menu) throw new Error('找不到菜單品項: ' + item.name);
   let price = menu.basePrice;
   // 飲料類特殊加減價
-  if (["紅茶", "鮮奶茶", "鮮奶綠", "阿華田", "多多綠", "多多檸檬", "冬瓜檸檬", "薄荷綠", "薄荷奶綠", "奶綠", "檸檬紅", "檸檬綠", "蜜茶", "可可亞", "椰果奶茶", "黑咖啡", "拿鐵咖啡"].includes(item.name)) {
+  if (["紅茶", "鮮奶茶", "綠茶", "奶茶"].includes(item.name)) {
     if (item.size === '中杯') price -= 5;
-    if (item.size === '小杯') price -= 10;
-  } else if (["綠茶", "奶茶"].includes(item.name)) {
-    if (item.size === '中杯') price -= 5;
-    if (item.size === '小杯') price -= 10;
   } else {
     if (item.size === '大杯') price += 5;
     if (item.size === '大份') price += 10;

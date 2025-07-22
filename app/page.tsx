@@ -77,7 +77,7 @@ const menuItems: MenuItem[] = [
   // 飲料類
   { id: 35, name: '紅茶', price: 25, category: '飲料', description: '經典紅茶' },
   { id: 36, name: '綠茶', price: 25, category: '飲料', description: '清新綠茶' },
-  { id: 48, name: '奶茶', price: 25, category: '飲料', description: '香濃奶茶' },
+  { id: 48, name: '奶茶', price: 35, category: '飲料', description: '香濃奶茶' },
   { id: 53, name: '鮮奶茶', price: 45, category: '飲料', description: '濃醇鮮奶茶' },
   { id: 44, name: '鮮奶綠', price: 45, category: '飲料', description: '鮮奶綠茶' },
   { id: 41, name: '冬瓜茶', price: 25, category: '飲料', description: '古早味冬瓜茶' },
