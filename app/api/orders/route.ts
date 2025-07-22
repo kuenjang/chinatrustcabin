@@ -95,6 +95,7 @@ function calcItemPrice(item) {
     if (item.size === '大份') price += 10;
   }
   // 其他加料可依需求擴充
+  if ((item.notes && item.notes.includes('加蛋')) || (item.specialRequest && item.specialRequest.includes('加蛋'))) price += 15;
   // 防呆：金額型別檢查
   if (typeof price !== 'number' || isNaN(price)) {
     throw new Error('金額計算異常: ' + item.name + '，price=' + price);

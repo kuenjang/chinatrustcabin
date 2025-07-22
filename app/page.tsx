@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import MenuCard from '../components/MenuCard';
 import OrderSidebar from '../components/OrderSidebar';
 import ItemSelectionModal from '../components/ItemSelectionModal';
@@ -120,6 +120,10 @@ export default function HomePage() {
   const [selectedItem, setSelectedItem] = useState<MenuItem | null>(null);
   const [showSelectionModal, setShowSelectionModal] = useState(false);
 
+  const categories = Array.from(new Set(menuItems.map(item => item.category)));
+  const [activeCategory, setActiveCategory] = useState(categories[0]);
+  const sectionRefs = useRef({});
+
   useEffect(() => {
     // 檢查系統深色模式偏好
     if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
@@ -135,6 +139,24 @@ export default function HomePage() {
       document.documentElement.classList.remove('dark');
     }
   }, [isDarkMode]);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      let found = categories[0];
+      for (const cat of categories) {
+        const el = document.getElementById(cat);
+        if (el) {
+          const rect = el.getBoundingClientRect();
+          if (rect.top <= 120) {
+            found = cat;
+          }
+        }
+      }
+      setActiveCategory(found);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [categories]);
 
   // 處理餐品選擇
   const handleItemSelect = (item: MenuItem) => {
@@ -286,8 +308,6 @@ export default function HomePage() {
     }
   };
 
-  const categories = Array.from(new Set(menuItems.map(item => item.category)));
-
   return (
     <div className={`min-h-screen transition-colors duration-300 ${
       isDarkMode 
@@ -336,6 +356,28 @@ export default function HomePage() {
           </div>
         </div>
       </header>
+      {/* Sticky 分類列 */}
+      <div className="sticky top-16 z-40 bg-white border-b border-orange-100 dark:bg-gray-800 dark:border-gray-700">
+        <div className="max-w-7xl mx-auto flex overflow-x-auto space-x-2 px-4 py-2 scrollbar-hide">
+          {categories.map(cat => (
+            <button
+              key={cat}
+              onClick={() => {
+                const el = document.getElementById(cat);
+                if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              }}
+              className={`px-5 py-2 rounded-2xl font-bold text-base transition-all duration-200
+                ${activeCategory === cat
+                  ? 'bg-orange-500 text-white shadow-lg shadow-orange-200 dark:shadow-orange-900/30 scale-105'
+                  : 'bg-orange-50 dark:bg-gray-700 text-orange-600 dark:text-orange-200 hover:bg-orange-200 dark:hover:bg-orange-900/50 hover:text-orange-900'}
+              `}
+              style={{letterSpacing: '0.05em'}}
+            >
+              {cat}
+            </button>
+          ))}
+        </div>
+      </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
@@ -343,7 +385,7 @@ export default function HomePage() {
           <div className="lg:col-span-3">
             <div className="space-y-8">
               {categories.map(category => (
-                <div key={category} className="space-y-4">
+                <div key={category} id={category} className="space-y-4 pt-8 scroll-mt-24">
                   <h2 className={`text-2xl font-bold border-b-2 border-orange-500 pb-2 ${
                     isDarkMode ? 'text-white' : 'text-gray-800'
                   }`}>

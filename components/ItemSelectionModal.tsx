@@ -103,7 +103,7 @@ const ItemSelectionModal: React.FC<ItemSelectionModalProps> = ({
       if (size === '大份') basePrice += 10;
     }
     if (extraOptionCategories.includes(item.category)) {
-      if (addEgg) basePrice += 10;
+      if (addEgg) basePrice += 15;
       if (addCheese) basePrice += 10;
     }
     return basePrice * quantity;
@@ -290,7 +290,7 @@ const ItemSelectionModal: React.FC<ItemSelectionModalProps> = ({
                     onChange={() => setAddEgg(v => !v)}
                     className="accent-orange-500 w-5 h-5"
                   />
-                  <span className="text-gray-700 dark:text-gray-300">加蛋 +10元</span>
+                  <span className="text-gray-700 dark:text-gray-300">加蛋 +15元</span>
                 </label>
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input
